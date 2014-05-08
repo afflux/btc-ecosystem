@@ -1,0 +1,1 @@
+SUBSYSTEM=="sha256", ACTION=="add", NAME="sha256", MODE="0666"
