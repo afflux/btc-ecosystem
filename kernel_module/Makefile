@@ -3,8 +3,14 @@ obj-m += sha256_accel.o
 KERNEL_ARM = ../../linux-Digilent-Dev
 KERNEL_INTEL = /lib/modules/$(shell uname -r)/build
 
-CCPREFIX_ARM = arm-linux-gnueabihf-
-CFLAGS=-mfloat-abi=hard
+
+ifneq ("$(wildcard $(shell which arm-linux-gnueabihf-gcc))","")
+	CCPREFIX_ARM=arm-linux-gnueabihf-
+	CFLAGS=
+else
+	CFLAGS=-mfloat-abi=hard
+	CCPREFIX_ARM=arm-none-eabi-
+endif
 
 .PHONY: all clean all-arm clean-arm all-intel clean-intel
 
@@ -12,9 +18,9 @@ all: all-intel
 clean: clean-intel
 
 all-arm:
-	make -C $(KERNEL_ARM) ARCH=arm CROSS_COMPILE=$(CCPREFIX_ARM) M=$(PWD) modules
+	make -C $(KERNEL_ARM) ARCH=arm CROSS_COMPILE=$(CCPREFIX_ARM) CFLAGS=$(CFLAGS) M=$(PWD) modules
 clean-arm:
-	make -C $(KERNEL_ARM) ARCH=arm CROSS_COMPILE=$(CCPREFIX_ARM) M=$(PWD) clean
+	make -C $(KERNEL_ARM) ARCH=arm CROSS_COMPILE=$(CCPREFIX_ARM) CFLAGS=$(CFLAGS) M=$(PWD) clean
 
 all-intel:
 	make -C $(KERNEL_INTEL) M=$(PWD) modules
