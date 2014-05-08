@@ -1,3 +1,64 @@
-$> make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean
-$> make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- zynq_zed_config
+First, get the necessary tools for cross compilation
+$> sudo apt-get install gcc-arm-linux-gnueabihf
+
+Then check out the u-boot sources from Xilinx
+$> git clone git://git.xilinx.com/u-boot-xlnx.git
+
+For later use, create a directory called "final"
+$> mkdir final
+
+change into the "u-boot-xlnx" directory
+$> cd u-boot-xlnx
+
+Then apply the following changes to
+	include/configs/zynq-common.h
+by using your favorite editor
+
+@@ -185,7 +185,7 @@
+        "kernel_image=uImage\0" \
+        "ramdisk_image=uramdisk.image.gz\0"     \
+        "devicetree_image=devicetree.dtb\0"     \
+-       "bitstream_image=system.bit.bin\0"      \
++       "bitstream_image=system.bit\0"  \
+        "boot_image=BOOT.bin\0" \
+        "loadbit_addr=0x100000\0"       \
+        "loadbootenv_addr=0x2000000\0" \
+@@ -202,7 +202,7 @@
+        "mmc_loadbit_fat=echo Loading bitstream from SD/MMC/eMMC to RAM.. && " \
+                "mmcinfo && " \
+                "fatload mmc 0 ${loadbit_addr} ${bitstream_image} && " \
+-               "fpga load 0 ${loadbit_addr} ${filesize}\0" \
++               "fpga loadb 0 ${loadbit_addr} ${filesize}\0" \
+        "norboot=echo Copying Linux from NOR flash to RAM... && " \
+                "cp.b 0xE2100000 0x3000000 ${kernel_size} && " \
+                "cp.b 0xE2600000 0x2A00000 ${devicetree_size} && " \
+@@ -227,11 +227,11 @@
+                "fi\0" \
+        "sdboot=if mmcinfo; then " \
+                        "run uenvboot; " \
++                       "run mmc_loadbit_fat; " \
+                        "echo Copying Linux from SD to RAM... && " \
+                        "fatload mmc 0 0x3000000 ${kernel_image} && " \
+                        "fatload mmc 0 0x2A00000 ${devicetree_image} && " \
+-                       "fatload mmc 0 0x2000000 ${ramdisk_image} && " \
+-                       "bootm 0x3000000 0x2000000 0x2A00000; " \
++                       "bootm 0x3000000 - 0x2A00000; " \
+                "fi\0" \
+
+Before starting, any stuff that might have gone wrong should be cleaned up and the according configuration has to be chosen.
+$> make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean zynq_zed_config
+
+After that, you can start compilation:
 $> make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j 4
+The number of concurrent jobs (-j) should be adjusted to the number of available cores on the machine (in this case it was four cores).
+
+When this is done, the relevant file can be picked up:
+	u-boot
+
+copy it to the location outside the source directory into the previously created "final" directory.
+$> cp u-boot ../final/u-boot.elf
+
+
+##############
+
+build the "boot.bin" in the Xilinx SDK
