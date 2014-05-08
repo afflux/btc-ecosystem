@@ -5,3 +5,5 @@ modules.order
 *.mod.c
 *.o
 *.ko
+.*.swp
+userspace_app/sha256
