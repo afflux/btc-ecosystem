@@ -4,6 +4,7 @@ KERNEL_ARM = ../../linux-Digilent-Dev
 KERNEL_INTEL = /lib/modules/$(shell uname -r)/build
 
 CCPREFIX_ARM = arm-linux-gnueabihf-
+CFLAGS=-mfloat-abi=hard
 
 .PHONY: all clean all-arm clean-arm all-intel clean-intel
 
