@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 entity sha256_accel_axi_v1_0_SHA256_ACCEL_AXI is
 	generic (
@@ -119,7 +118,9 @@ architecture arch_imp of sha256_accel_axi_v1_0_SHA256_ACCEL_AXI is
 	signal slv_reg_wren	: std_logic;
 	signal reg_data_out	:std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
 	signal byte_index	: integer;
-
+	
+	signal irq_countdown : unsigned(C_S_AXI_ADDR_WIDTH-1 downto 0);
+    signal irq_load, irq_reset : std_logic;
 begin
 	-- I/O Connections assignments
 
@@ -210,6 +211,8 @@ begin
 	variable loc_addr :std_logic_vector(OPT_MEM_ADDR_BITS downto 0); 
 	begin
 	  if rising_edge(S_AXI_ACLK) then 
+        irq_load <= '0';
+        irq_reset <= '0';
 	    if S_AXI_ARESETN = '0' then
 	      slv_reg0 <= (others => '0');
 	      slv_reg1 <= (others => '0');
@@ -241,6 +244,8 @@ begin
 	                -- Respective byte enables are asserted as per write strobes                   
 	                -- slave registor 2
 	                slv_reg2(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+	                
+	                irq_load <= '1';
 	              end if;
 	            end loop;
 	          when b"11" =>
@@ -249,6 +254,7 @@ begin
 	                -- Respective byte enables are asserted as per write strobes                   
 	                -- slave registor 3
 	                slv_reg3(byte_index*8+7 downto byte_index*8) <= S_AXI_WDATA(byte_index*8+7 downto byte_index*8);
+	                irq_reset <= '1';
 	              end if;
 	            end loop;
 	          when others =>
@@ -355,9 +361,9 @@ begin
 	      when b"00" =>
 	        reg_data_out <= slv_reg0;
 	      when b"01" =>
-	        reg_data_out <= slv_reg1;
+	        reg_data_out <= not slv_reg0;
 	      when b"10" =>
-	        reg_data_out <= slv_reg2;
+	        reg_data_out <= std_logic_vector(irq_countdown);
 	      when b"11" =>
 	        reg_data_out <= slv_reg3;
 	      when others =>
@@ -386,8 +392,30 @@ begin
 
 
 	-- Add user logic here
-
-    irq <= '0';
+	
+	process (S_AXI_ACLK)
+    begin
+        if (rising_edge (S_AXI_ACLK)) then
+            if S_AXI_ARESETN = '0' then
+                irq <= '0';
+                irq_countdown <= 0;
+            elsif irq_reset = '1' then
+                irq <= '0'; 
+            elsif irq_load = '1' then
+                irq_countdown <= unsigned(slv_reg0);
+            else
+                case irq_countdown is
+                    when 0 =>
+                        irq_countdown <= 0;
+                    when 1 =>
+                        irq_countdown <= 0;
+                        irq <= '1';
+                    when others =>
+                        irq_countdown <= irq_countdown - 1;
+                end case;
+            end if;
+        end if;
+    end process;
 
 	-- User logic ends
 

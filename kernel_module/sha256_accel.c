@@ -7,13 +7,19 @@
 #include <linux/sched.h>
 #include <linux/list.h>
 #include <linux/slab.h>
+#include <linux/interrupt.h>
 #include <asm/uaccess.h>
+#include <asm/io.h>
 
 #include "include/sha256_accel.h"
 
 #define DBG(type, message, ...) printk(type CLASS_NAME ": " message, ##__VA_ARGS__)
 
 #define SHA256_MSG_INJECT
+
+#define SHA256_ACCEL_ADDR_BASE 0x43c00000
+#define SHA256_ACCEL_ADDR_LEN 16
+#define SHA256_ACCEL_IRQ 61
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Keßler");
@@ -36,6 +42,7 @@ static DECLARE_WAIT_QUEUE_HEAD(sha256_accel_queue);
 static LIST_HEAD(sha256_accel_msg_list);
 static DEFINE_MUTEX(sha256_accel_msg_mutex);
 static char *sha256_accel_msg = NULL, *sha256_accel_msg_ptr = NULL;
+static __u32 *sha256_accel_mem;
 
 static bool sha256_accel_msg_dequeue(void) {
 	struct list_head *ptr;
@@ -161,7 +168,8 @@ static unsigned int sha256_accel_poll(struct file *file_ptr, struct poll_table_s
 }
 
 static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsigned long param) {
-	const char *prefix;
+	void *addr;
+	__u32 test;
 
 	if (_IOC_TYPE(command) != SHA256_ACCEL_MAGIC)
 		return -ENOTTY;
@@ -178,15 +186,49 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 		break;
 
 	case SHA256_ACCEL_SET_PREFIX:
-		prefix = (const char __user *) param;
+		addr = (void __user *) param;
 
 		// TODO: what is the length of the prefix? (100 is just dummy, it's not correct!)
-		if (!access_ok(VERIFY_READ, prefix, /* TODO replace --> */ 100 /* <-- TODO replace */ ))
+		if (!access_ok(VERIFY_READ, addr, /* TODO replace --> */ 100 /* <-- TODO replace */ ))
 			return -EFAULT;
 
 		// TODO: get the prefix from the user and put it into the device
 
 		//copy_from_user(buf, prefix, 100);
+		break;
+
+	case SHA256_ACCEL_SET_TEST:
+		addr = (void __user *) param;
+		if (IS_ERR_VALUE(get_user(test, (__u32 *) addr)))
+			 return -EFAULT;
+
+		iowrite32(test, &sha256_accel_mem[0]);
+
+		break;
+
+	case SHA256_ACCEL_GET_TEST:
+		addr = (void __user *) param;
+
+		test = ioread32(&sha256_accel_mem[1]);
+
+		if (IS_ERR_VALUE(put_user(test, (__u32 *) addr)))
+			 return -EFAULT;
+
+		break;
+
+	case SHA256_ACCEL_IRQ_START:
+		iowrite32(0, &sha256_accel_mem[2]);
+
+		break;
+
+	case SHA256_ACCEL_IRQ_GET:
+		addr = (void __user *) param;
+
+		test = ioread32(&sha256_accel_mem[2]);
+
+		if (IS_ERR_VALUE(put_user(test, (__u32 *) addr)))
+			 return -EFAULT;
+
 		break;
 
 	default:
@@ -209,8 +251,6 @@ static int sha256_accel_open(struct inode *inode, struct file *file_ptr) {
 #endif
 
 	// TODO: reset the device, do self-test, ...
-
-	request_mem_region(0x43c00000, 16, DEVICE_NAME);
 
 	msg_ptr = (struct sha256_accel_msg_struct *) kmalloc(sizeof(*msg_ptr), GFP_KERNEL);
 	msg_ptr->msg = (char *) kmalloc(50, GFP_KERNEL);
@@ -246,8 +286,17 @@ static const struct file_operations sha256_accel_fops = {
 	.release = sha256_accel_release
 };
 
+static irqreturn_t sha256_accel_irq(int irqid, void *dev_id) {
+	DBG(KERN_INFO, "I just got interrupted.\n");
+
+	iowrite32(0, &sha256_accel_mem[3]);
+
+	return IRQ_HANDLED;
+}
+
 static int __init sha256_accel_init(void) {
 	int retval;
+	struct resource *mem;
 
 	sha256_accel_major = register_chrdev(0, DEVICE_NAME, &sha256_accel_fops);
 	if (sha256_accel_major < 0) {
@@ -272,9 +321,25 @@ static int __init sha256_accel_init(void) {
 		goto error_device;
 	}
 
+
+	mem = request_mem_region(SHA256_ACCEL_ADDR_BASE, SHA256_ACCEL_ADDR_LEN, DEVICE_NAME);
+	if (mem == NULL) {
+		DBG(KERN_ALERT, "Failed to request memory region of length %d starting %p.\n", SHA256_ACCEL_ADDR_LEN, (void *) SHA256_ACCEL_ADDR_BASE);
+		retval = -1;
+		goto error_mem_region;
+	}
+
+	sha256_accel_mem = ioremap_nocache(SHA256_ACCEL_ADDR_BASE, SHA256_ACCEL_ADDR_LEN);
+
+	retval = request_irq(SHA256_ACCEL_IRQ, sha256_accel_irq, 0, DEVICE_NAME, NULL);
+	if (IS_ERR_VALUE(retval))
+		goto error_irq;
+
 	return 0;
 
 	/* if anything goes wrong, free the allocated ressources in the reverse order */
+error_irq:
+error_mem_region:
 error_device:
 	class_unregister(sha256_accel_class);
 	class_destroy(sha256_accel_class);
@@ -307,6 +372,11 @@ static void __exit sha256_accel_exit(void) {
 		kfree(msg_ptr->msg);
 		kfree(msg_ptr);
 	}
+
+	iounmap(sha256_accel_mem);
+	release_mem_region(SHA256_ACCEL_ADDR_BASE, SHA256_ACCEL_ADDR_LEN);
+
+	free_irq(SHA256_ACCEL_IRQ, NULL);
 
 	device_destroy(sha256_accel_class, MKDEV(sha256_accel_major, 0));
 	class_unregister(sha256_accel_class);

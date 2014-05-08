@@ -1,4 +1,4 @@
-OBJS = main.o
+OBJS = main2.o
 EXEC = sha256
 CFLAGS = -O2 -Wall
 LFLAGS =
