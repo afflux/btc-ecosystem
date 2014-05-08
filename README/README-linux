@@ -1,0 +1,46 @@
+First, get two necessary ubuntu packages for cross-compilation and U-Boot:
+$> sudo apt-get install gcc-arm-linux-gnueabihf u-boot-tools
+
+Get the linux kernel sources from Digilent:
+$> git clone https://github.com/Digilent/linux-Digilent-Dev.git
+
+for later, create a directory called "final"
+$> mkdir final
+
+change into the "linux-Digilent-Dev" directory
+$> cd linux-Digilent-Dev
+
+One small change has to be made to them. In the device tree source file
+	arch/arm/boot/dts/zynq-zed.dts
+in the bootargs line change root to "/dev/mmcblk0p2" and add rootwait at the end. The line should look like this:
+	bootargs = "console=ttyPS0,115200 root=/dev/mmcblk0p2 rw earlyprintk rootwait";
+This can be done with anyones favourite editor.
+
+Before starting, any stuff that might have gone wrong should be cleaned up and the according configuration has to be chosen.
+$> make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- distclean xilinx_zynq_defconfig
+
+Then the kernel as well as the device-tree binary can be built.
+$> make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- -j 4 zImage zynq-zed.dtb
+The number of concurrent jobs (-j) should be adjusted to the number of available cores on the machine (in this case it was four cores).
+
+When this is done, two relevant files can be picked up:
+arch/arm/boot/zImage
+arch/arm/boot/dts/zynq-zed.dtb
+
+copy both of them to the location outside the linux source directory into the previously created "final" directory.
+$> cp arch/arm/boot/zImage ../final
+$> cp arch/arm/boot/dts/zynq-zed.dtb ../final/devicetree.dtb
+
+change into the "final" directory
+$> cd ../final
+
+compress the kernel image
+$> gzip zImage
+
+pack the compressed kernel in a U-Boot readable form (mkimage is from the ubuntu package "u-boot-tools"):
+$> mkimage -A arm -a 0x8000 -e 0x8000 -n 'Linux kernel' -T kernel -d zImage.gz uImage
+
+#######################################
+
+boot.bin from
+http://xillybus.com/downloads/xillinux-eval-zedboard-1.3.zip

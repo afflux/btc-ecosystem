@@ -1,0 +1,10 @@
+- The Makefile probably has to be adjusted to have to correct path (KERNEL_ARM) to the linux sources that will be used for the ARM based board
+- To icompile for the developent/ host system the header package for the current kernel has to be installed.
+  (At the time of writing the ubuntu package might be: linux-headers-3.13.0-24-generic, but normally this is already installed)
+  If this is present, do
+$> make all-intel
+- To compile for the ARM board, the ARM cross-compiler (ubuntu package: gcc-arm-linux-gnueabihf) has to be installed. Then do
+$> make all-arm
+
+To make udev assign the right privilegs to the device file, link the "99-sha256_accel.rules" file in the rules directory:
+$> sudo ln -s 99-sha256_accel.rules /etc/udev/rules.d/
