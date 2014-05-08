@@ -1,6 +1,6 @@
 obj-m += sha256_accel.o
 
-KERNEL_ARM = $(HOME)/Documents/ElecDesign/btc/linux-Digilent-Dev
+KERNEL_ARM = ../../linux-Digilent-Dev
 KERNEL_INTEL = /lib/modules/$(shell uname -r)/build
 
 CCPREFIX_ARM = arm-linux-gnueabihf-
