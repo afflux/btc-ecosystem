@@ -1,0 +1,16 @@
+see also https://en.bitcoin.it/wiki/Block_hashing_algorithm
+
+
+state			256bit	in
+
+btcMerkleRootLsb	 32bit	in			(defined by bitcoin block hashing algo)
+btcTime			 32bit	in			(defined by bitcoin block hashing algo)
+btcBits			 32bit	in			(defined by bitcoin block hashing algo)
+numLeadingZeroBits	 32bit	in			(number of bits supposed to be zero in output)
+control			 32bit	in			(start,reset)
+irqMask			 32bit	in			(irq handling)
+candidatenonce		 32bit	out			(candidates)
+currentnonce		 32bit	out			(progress info)
+status			 32bit	out			(status flags)
+
+		sum	544bit
