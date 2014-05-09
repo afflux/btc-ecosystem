@@ -1,7 +1,7 @@
-OBJS = main2.o
+OBJS = main.o
 EXEC = sha256
-CFLAGS = -O2 -Wall
-LFLAGS =
+CFLAGS = -O2 -Wall -g
+LFLAGS = -lssl -lcrypto
 INCLUDES = ../kernel_module/include/
 CC = gcc
 
@@ -16,4 +16,4 @@ clean:
 	$(CC) -o $@ -c $(CFLAGS) -I $(INCLUDES) $<
 
 $(EXEC): $(OBJS)
-	$(CC) -o $@ $(LFLAGS) $^
+	$(CC) -o $@ $^ $(LFLAGS)

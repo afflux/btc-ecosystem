@@ -144,14 +144,12 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 		return -ENOTTY;
 
 	switch(command) {
-	case SHA256_ACCEL_START:
-		DBG(KERN_INFO, "Starting accelerated sha256 computation.\n");
-		// TODO: implementation
+	case SHA256_ACCEL_RESET:
+		iowrite32(0x1, &sha256_accel_mem[15]);
 		break;
 
-	case SHA256_ACCEL_STOP:
-		DBG(KERN_INFO, "Stopping accelerated sha256 computation.\n");
-		// TODO: implementation
+	case SHA256_ACCEL_START:
+		iowrite32(0x2, &sha256_accel_mem[15]);
 		break;
 
 	case SHA256_ACCEL_SET_STATE_IN:

@@ -2,6 +2,7 @@
 #	define _SHA256_ACCEL_H
 
 #	include <asm/ioctl.h>
+#	include <asm/types.h>
 
 #	define CLASS_NAME "sha256"
 #	define DEVICE_NAME CLASS_NAME
@@ -10,8 +11,8 @@
 
 #	define SHA256_ACCEL_MAGIC 'S'
 
-#	define SHA256_ACCEL_START _IO(SHA256_ACCEL_MAGIC, 0)
-#	define SHA256_ACCEL_STOP _IO(SHA256_ACCEL_MAGIC, 1)
+#	define SHA256_ACCEL_RESET _IO(SHA256_ACCEL_MAGIC, 0)
+#	define SHA256_ACCEL_START _IO(SHA256_ACCEL_MAGIC, 1)
 
 #	define SHA256_ACCEL_SET_STATE_IN _IOW(SHA256_ACCEL_MAGIC, 2, const unsigned char *)
 #	define SHA256_ACCEL_SET_PREFIX _IOW(SHA256_ACCEL_MAGIC, 3, const unsigned char *)
