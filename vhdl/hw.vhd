@@ -88,6 +88,7 @@ begin
         variable w_in: w32;
         variable k_in: w32;
       begin
+        states(i) <= states(i);
         if RISING_EDGE(clk) then
           case stage_enable(i*16 to i*16+15) is
             when "1000000000000000" =>
@@ -171,8 +172,6 @@ begin
               k_in := (others=>'X');
           end case;
           states(i) <= cf1(state_in, w_in, k_in);
-        else
-          states(i) <= states(i);
         end if;
       end process;
     end generate GEN_LOOP;

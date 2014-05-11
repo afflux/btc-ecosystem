@@ -1,10 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
+
+library global_lib;
+use global_lib.numeric_std.all;
 
 entity sha256_accel_axi_v1_0 is
 	port (
 		sha256_accel_irq : out std_logic;
+        sha256_accel_clk : in std_logic;
 
 		-- Ports of Axi Slave Bus Interface SHA256_ACCEL_AXI
 
@@ -83,6 +86,20 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 	signal sha256_accel_status : std_logic_vector(31 downto 0);
 	signal sha256_accel_control : std_logic_vector(31 downto 0);
 	signal sha256_accel_irq_mask : std_logic;
+	
+	signal internal_state_in : std_ulogic_vector(255 downto 0);
+    signal internal_prefix : std_ulogic_vector(95 downto 0);
+    signal internal_num_leading_zero : unsigned(7 downto 0);
+    signal internal_nonce_candidate : unsigned(31 downto 0);
+    signal internal_nonce_current : unsigned(31 downto 0);
+
+    signal internal_status : std_ulogic_vector(31 downto 0);
+    signal internal_control : std_ulogic_vector(31 downto 0);
+    signal internal_irq_mask : std_ulogic;
+    signal internal_clk: std_ulogic;
+	
+	signal internal_irq, irq_load, irq_reset: std_ulogic;
+	signal external_irq: std_logic;
 begin
 	-- I/O Connections assignments
 	sha256_accel_axi_awready <= axi_awready;
@@ -358,5 +375,55 @@ begin
 			end if;
 		end if;
 	end process;
+	
+	
+	process(internal_irq)
+	begin
+	   irq_load <= '0';
+	   if internal_irq = '1' then
+	       irq_load <= '1';
+       end if;
+	end process;
+	
+	process(sha256_accel_irq_mask)
+    begin
+       irq_reset <= '0';
+       if sha256_accel_irq_mask = '1' then
+           irq_reset <= '1';
+       end if;
+    end process;
+	
+	process(irq_load, irq_reset)
+	begin
+	   if irq_reset = '1' then
+	       external_irq <= '0';
+	   elsif irq_load = '1' then
+	       external_irq <= '1';
+	   else
+	       external_irq <= external_irq;
+	   end if;
+	end process;
+           
+   sha256_accel_irq <= external_irq;
+	
+	
+	inst: entity work.org(arc) port map(internal_clk,
+	                                   internal_state_in,
+	                                   internal_prefix,
+	                                   internal_num_leading_zero,
+	                                   internal_control,
+	                                   internal_nonce_candidate,
+	                                   internal_nonce_current,
+	                                   internal_status,
+	                                   internal_irq);
+	                                   
+    internal_clk <= sha256_accel_clk;
+    internal_state_in <= to_stdulogicvector(sha256_accel_state_in);
+    internal_prefix <= to_stdulogicvector(sha256_accel_prefix);
+    internal_num_leading_zero <= sha256_accel_num_leading_zero;
+    internal_control <= to_stdulogicvector(sha256_accel_control);
+    sha256_accel_nonce_candidate <= internal_nonce_candidate;
+    sha256_accel_nonce_current <= internal_nonce_current;
+    sha256_accel_status <= to_stdlogicvector(internal_status);
 
 end architecture;

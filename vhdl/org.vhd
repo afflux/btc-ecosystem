@@ -16,7 +16,7 @@ entity org is
        state_in: in std_ulogic_vector(255 downto 0);
        prefix: in std_ulogic_vector(95 downto 0);
        nlz: in unsigned(7 downto 0);
-       ctrl: in std_ulogic_vector(32 downto 0);
+       ctrl: in std_ulogic_vector(31 downto 0);
        
        nonce_candidate: out unsigned(31 downto 0);
        nonce_current: out unsigned(31 downto 0);
@@ -30,8 +30,8 @@ architecture arc of org is
   constant RST_IDX: natural := 0;
   constant RUN_IDX: natural := 1;
   constant NONCE_MAX: unsigned(31 downto 0) := (others=>'1');
-  constant PADDING_0: std_ulogic_vector(0 to 383) := (0=>'1', 374 to 383 => "1010000000", others=>'0');
-  constant PADDING_1: std_ulogic_vector(0 to 255) := (0=>'1', 247 to 255 =>  "100000000", others=>'0');
+  constant PADDING_0: std_ulogic_vector(0 to 383) := (0=>'1', 374=>'1', 376=>'1', others=>'0');
+  constant PADDING_1: std_ulogic_vector(0 to 255) := (0=>'1', 247=>'1', others=>'0');
 
   type nonce_pipe_t is array(integer range <>) of unsigned(31 downto 0);
   signal stage_pipe: std_ulogic_vector(0 to 132);
