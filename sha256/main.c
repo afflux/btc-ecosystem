@@ -8,77 +8,28 @@
 /*
  * those are the standard FIPS-180-2 test vectors
  */
-static const char *msg[] = {
-		"abc",
-		"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
-};
-
-static const char *val[] = {
-		"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
-		"248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1",
-		"cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0"
-};
+static const unsigned char msg[] = 
+	"\x01\x00\x00\x00\x81\xcd\x02\xab\x7e\x56\x9e\x8b\xcd\x93\x17\xe2\xfe\x99\xf2\xde"
+	"\x44\xd4\x9a\xb2\xb8\x85\x1b\xa4\xa3\x08\x00\x00\x00\x00\x00\x00\xe3\x20\xb6\xc2"
+	"\xff\xfc\x8d\x75\x04\x23\xdb\x8b\x1e\xb9\x42\xae\x71\x0e\x95\x1e\xd7\x97\xf7\xaf"
+	"\xfc\x88\x92\xb0";
 
 uint8_t buf[4096];
 
 int main(int argc, char *argv[]) {
-	FILE *f;
 	sha256_context ctx;
-	int i, j, n;
-	char output[65];
+	int j;
 	uint8_t sha256sum[32];
 
-	if (argc < 2) {
-		printf("SHA-256 Validation Tests:\n");
+	sha256_init(&ctx);
 
-		for (i = 0; i < 3; ++i) {
-			printf("Test %d ", i + 1);
+	sha256_update(&ctx, (const uint8_t *) msg, 64);
 
-			sha256_init(&ctx);
+	sha256_nofinish(&ctx, sha256sum);
 
-			if (i < 2) {
-				sha256_update(&ctx, (uint8_t *) msg[i], strlen(msg[i]));
-			} else {
-				memset(buf, 'a', 1000);
-				for (j = 0; j < 1000; ++j)
-					sha256_update(&ctx, (uint8_t *) buf, 1000);
-			}
+	for (j = 0; j < 32; ++j)
+		printf("%02x", sha256sum[j]);
+	putchar('\n');
 
-			sha256_finish(&ctx, sha256sum);
-
-			for (j = 0; j < 32; j++) {
-				sprintf(output + j * 2, "%02x", sha256sum[j]);
-			}
-
-			if (memcmp(output, val[i], 64)) {
-				printf("failed!\n");
-				return 1;
-			}
-
-			printf("passed.\n");
-		}
-	} else {
-		for (i = 1; i < argc; ++i) {
-			f = fopen(argv[i], "rb");
-			if (!f) {
-				perror("fopen");
-				return 1;
-			}
-
-			sha256_init(&ctx);
-
-			while ((n = fread(buf, 1, sizeof(buf), f)) > 0)
-				sha256_update(&ctx, buf, n);
-
-			fclose(f);
-
-			sha256_finish(&ctx, sha256sum);
-
-			for (j = 0; j < 32; ++j)
-				printf("%02x", sha256sum[j]);
-
-			printf("  %s\n", argv[i]);
-		}
-	}
 	return 0;
 }

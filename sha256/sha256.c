@@ -35,7 +35,7 @@ static uint32_t F1(uint32_t x, uint32_t y, uint32_t z) {
 	return z ^ (x & (y ^ z));
 }
 
-static uint32_t extract_uint32_t(uint8_t *buffer, size_t position) {
+static uint32_t extract_uint32_t(const uint8_t *buffer, size_t position) {
 	return (((uint32_t) buffer[position]) << 24) +
 			(((uint32_t) buffer[position + 1]) << 16) +
 			(((uint32_t) buffer[position + 2]) << 8) +
@@ -73,7 +73,7 @@ void sha256_init(sha256_context *ctx) {
 	ctx->state[7] = 0x5BE0CD19;
 }
 
-static void sha256_process(sha256_context *ctx, uint8_t data[64]) {
+static void sha256_process(sha256_context *ctx, const uint8_t data[64]) {
 	int i;
 	uint32_t temp1, temp2, W[64];
 	uint32_t A, B, C, D, E, F, G, H;
@@ -173,7 +173,7 @@ static void sha256_process(sha256_context *ctx, uint8_t data[64]) {
 	ctx->state[7] += H;
 }
 
-void sha256_update(sha256_context *ctx, uint8_t *input, size_t length) {
+void sha256_update(sha256_context *ctx, const uint8_t *input, size_t length) {
 	size_t left, fill;
 
 	if (!length)
@@ -203,7 +203,6 @@ void sha256_update(sha256_context *ctx, uint8_t *input, size_t length) {
 }
 
 void sha256_finish(sha256_context *ctx, uint8_t digest[32]) {
-	int i;
 	size_t last, padn;
 
 	last = ctx->total & 0x3F;
@@ -214,6 +213,11 @@ void sha256_finish(sha256_context *ctx, uint8_t digest[32]) {
 	insert_uint64_t(padding + padn, 0, ctx->total * 8);
 
 	sha256_update(ctx, padding, padn + 8);
+	sha256_nofinish(ctx, digest);
+}
+
+void sha256_nofinish(sha256_context *ctx, uint8_t digest[32]) {
+	int i;
 	for (i = 0; i < 8; ++i)
 		insert_uint32_t(digest, i * 4, ctx->state[i]);
 }
