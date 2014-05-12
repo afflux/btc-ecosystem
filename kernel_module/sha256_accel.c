@@ -230,17 +230,24 @@ static const struct file_operations sha256_accel_fops = {
 };
 
 static irqreturn_t sha256_accel_irq(int irqid, void *dev_id) {
+	struct sha256_accel_msg_list_s *msg;
+
 	DBG(KERN_INFO, "I just got interrupted.\n");
 
-	iowrite32(0, &sha256_accel_mem[3]);
+	msg = (struct sha256_accel_msg_list_s *) kmalloc(sizeof(*msg), GFP_KERNEL);
+	msg->payload.status = ioread32(&sha256_accel_mem[14]);
+	msg->payload.nonce_candidate = ioread32(&sha256_accel_mem[12]);
 
-	#if 0
+	iowrite32(0x1, &sha256_accel_mem[16]);
 
-	msg_ptr = (struct sha256_accel_msg_struct *) kmalloc(sizeof(*msg_ptr), GFP_KERNEL);
-	msg_ptr->msg = (char *) kmalloc(50, GFP_KERNEL);
-	snprintf(msg_ptr->msg, 50, "Currently there are %d messages.\n", n);
-	list_add_tail(&msg_ptr->list, &sha256_accel_msg_list);
-	#endif
+	DBG(KERN_INFO, "status=%08x nc=%08x\n", msg->payload.status, msg->payload.nonce_candidate);
+
+	mutex_lock(&sha256_accel_msg_mutex);
+	list_add_tail(&msg->list, &sha256_accel_msg_list);
+	mutex_unlock(&sha256_accel_msg_mutex);
+
+	wake_up(&sha256_accel_queue);
+	DBG(KERN_INFO, "cya l8er.\n");
 
 	return IRQ_HANDLED;
 }
@@ -308,8 +315,10 @@ static void __exit sha256_accel_exit(void) {
 	if (sha256_accel_msg)
 		kfree(sha256_accel_msg);
 
-	// TODO: turn off the accelerator (so it doesn't generate interrupts anymore)
+	// turn off the accelerator (so it doesn't generate interrupts anymore
+	iowrite32(0x1, &sha256_accel_mem[15]);
 
+	mutex_lock(&sha256_accel_msg_mutex);
 	while (!list_empty(&sha256_accel_msg_list)) {
 		/* there are messages available, so we fetch the next one from the list */
 		ptr = sha256_accel_msg_list.next;
@@ -327,6 +336,8 @@ static void __exit sha256_accel_exit(void) {
 	release_mem_region(SHA256_ACCEL_ADDR_BASE, SHA256_ACCEL_ADDR_LEN);
 
 	free_irq(SHA256_ACCEL_IRQ, NULL);
+	mutex_unlock(&sha256_accel_msg_mutex);
+
 
 	device_destroy(sha256_accel_class, MKDEV(sha256_accel_major, 0));
 	class_unregister(sha256_accel_class);

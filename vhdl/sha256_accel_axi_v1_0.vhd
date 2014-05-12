@@ -98,7 +98,7 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
     signal internal_irq_mask : std_ulogic;
     signal internal_clk: std_ulogic;
 	
-	signal internal_irq, irq_load, irq_reset: std_ulogic;
+	signal internal_irq: std_ulogic;
 	signal external_irq: std_logic;
 begin
 	-- I/O Connections assignments
@@ -188,13 +188,10 @@ begin
 				sha256_accel_state_in <= (others => '0');
 				sha256_accel_prefix <= (others => '0');
 				sha256_accel_num_leading_zero <= (others => '0');
-				sha256_accel_nonce_candidate <= (others => '0');
-				sha256_accel_nonce_current <= (others => '0');
-
-				sha256_accel_status <= (others => '0');
 				sha256_accel_control <= (others => '0');
 				sha256_accel_irq_mask <= '0';
 			else
+				sha256_accel_irq_mask <= '0';
 				loc_addr := to_integer(axi_awaddr(9 downto 2));
 				if (slv_reg_wren = '1') then
 					case loc_addr is
@@ -376,32 +373,19 @@ begin
 		end if;
 	end process;
 	
-	
-	process(internal_irq)
+	process(sha256_accel_axi_aclk)
 	begin
-	   irq_load <= '0';
-	   if internal_irq = '1' then
-	       irq_load <= '1';
-       end if;
-	end process;
-	
-	process(sha256_accel_irq_mask)
-    begin
-       irq_reset <= '0';
-       if sha256_accel_irq_mask = '1' then
-           irq_reset <= '1';
-       end if;
-    end process;
-	
-	process(irq_load, irq_reset)
-	begin
-	   if irq_reset = '1' then
-	       external_irq <= '0';
-	   elsif irq_load = '1' then
-	       external_irq <= '1';
-	   else
-	       external_irq <= external_irq;
-	   end if;
+		if RISING_EDGE(sha256_accel_axi_aclk) then
+			if sha256_accel_axi_aresetn = '0' then
+				external_irq <= '0';
+			elsif sha256_accel_irq_mask = '1' then
+				external_irq <= '0';
+			elsif internal_irq = '1' then
+				external_irq <= '1';
+			else
+				external_irq <= external_irq;
+			end if;
+		end if;
 	end process;
            
    sha256_accel_irq <= external_irq;

@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <openssl/sha.h>
+#include <sys/select.h>
 
 #include <sha256_accel.h>
 
@@ -16,30 +16,55 @@ struct btc_s {
 	__u32 Nonce;
 }__attribute__((packed));
 
-static inline void sha256(const char *msg, const size_t len, unsigned char hash[SHA256_DIGEST_LENGTH]) {
-	SHA256_CTX ctx;
-	SHA256_Init(&ctx);
-	SHA256_Update(&ctx, msg, len);
-	SHA256_Final(hash, &ctx);
-}
-
 int main(int argc, char *argv[]) {
-	int fd = open(SHA256_ACCEL_DEVICE, O_RDWR);
+	fd_set set;
+	struct timeval timeout;
+	int ret, fd = open(SHA256_ACCEL_DEVICE, O_RDWR);
+	struct sha256_accel_msg_s msg;
+	__u32 nonce_current, status = 0u;
+
 	if (fd == -1) {
 		perror("failed to open sha256 accelerator device " SHA256_ACCEL_DEVICE);
 		exit(EXIT_FAILURE);
 	}
 
-	__u8 num_leading_zeros = 4;
-	const char prefix[] = "<Das ist das Haus vom Nikolaus.>";
+	ioctl(fd, SHA256_ACCEL_RESET);
+	do {
+		ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
+		perror("ioctl");
+		printf("status: %08x\n", status);
+	}while (status != 1u);
 
-	ioctl(fd, SHA256_ACCEL_SET_STATE_IN, "todo");
-	ioctl(fd, SHA256_ACCEL_SET_PREFIX, prefix);
-	ioctl(fd, SHA256_ACCEL_SET_NUM_LEADING_ZEROS, num_leading_zeros);
+	ioctl(fd, SHA256_ACCEL_SET_STATE_IN, "\x95\x24\xc5\x93\x05\xc5\x67\x13\x16\xe6\x69\xba\x2d\x28\x10\xa0\x07\xe8\x6e\x37\x2f\x56\xa9\xda\xcd\x5b\xce\x69\x7a\x78\xda\x2d");
+	ioctl(fd, SHA256_ACCEL_SET_PREFIX, "\xf1\xfc\x12\x2b\xc7\xf5\xd7\x4d\xf2\xb9\x44\x1a");
+	ioctl(fd, SHA256_ACCEL_SET_NUM_LEADING_ZEROS, (__u8) 24);
 
 	ioctl(fd, SHA256_ACCEL_START);
 
-	//ret = read(fd, buf, sizeof(buf) - 1);
+	while(1) {
+		FD_ZERO(&set);
+		FD_SET(fd, &set);
+		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
+
+		ret = select(1, &set, NULL, NULL, &timeout);
+
+		if (ret == 0) {
+			ret = ioctl(fd, SHA256_ACCEL_GET_NONCE_CURRENT, &nonce_current);
+			ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
+			printf("status: %08x, nonce current: %08x\n", status, nonce_current);
+		} else if (ret == -1) {
+			perror("select");
+		} else {
+			ret = read(fd, (char *) &msg, sizeof(msg));
+			if (ret == sizeof(msg))
+				printf("status: %08x, nonce candidate: %08x\n", msg.status, msg.nonce_candidate);
+			else
+				fprintf(stderr, "short read\n");
+			break;
+		}
+	}
+	close(fd);
 
 	return EXIT_SUCCESS;
 }

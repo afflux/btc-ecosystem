@@ -1,7 +1,7 @@
 OBJS = main.o
 EXEC = sha256
 CFLAGS = -O2 -Wall -g
-LFLAGS = -lssl -lcrypto
+LFLAGS =
 INCLUDES = ../kernel_module/include/
 CC = gcc
 

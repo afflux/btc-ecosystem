@@ -73,8 +73,8 @@ begin
         end function combine_state;
 
       begin
-        states(4) <= states(4);
         if RISING_EDGE(clk) then
+		  states(4) <= states(4);
           if stage_enable(4*16) = '1' then
             states(4) <= combine_state(states(3), hin_pipe(4*16));
           end if;
@@ -88,8 +88,8 @@ begin
         variable w_in: w32;
         variable k_in: w32;
       begin
-        states(i) <= states(i);
         if RISING_EDGE(clk) then
+		  states(i) <= states(i);
           case stage_enable(i*16 to i*16+15) is
             when "1000000000000000" =>
               if i = 0 then
@@ -166,7 +166,9 @@ begin
               w_in := (others=>'X');
               k_in := (others=>'X');
             when others =>
+              -- pragma synthesis_off
               report "invalid stage enable vector" severity error;
+              -- pragma synthesis_on
               state_in := (others=>(others=>'X'));
               w_in := (others=>'X');
               k_in := (others=>'X');

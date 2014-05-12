@@ -86,25 +86,16 @@ begin
   process(clk, ctrl)
     function is_candidate(nlz: unsigned(7 downto 0); candidate: block256) return boolean is
       variable nlzi: integer := to_integer(nlz);
-      variable mask: unsigned(255 downto 0);
-      variable c: unsigned(0 to 255);
+      variable mask: std_ulogic_vector(255 downto 0);
     begin
       for i in 0 to 31 loop
         for j in 7 downto 0 loop
           mask(i*8 + j) := '1' when (i*8) + (7-j) < nlzi else '0';
         end loop;
       end loop;
-      c := unsigned(to_suv256(candidate));
-      return (mask and c) = 0;
+      return (mask and to_suv256(candidate)) = 0;
     end function is_candidate;
   begin
-    status_internal <= status_internal;
-    ctr <= ctr;
-    nonce_pipe <= nonce_pipe;
-    stage_pipe <= stage_pipe;
-    nonce <= nonce;
-    irq <= '0';
-
     if ctrl(RST_IDX) = '1' then
       stage_pipe <= (others=>'0');
       nonce_pipe <= (others=>(others=>'0'));
@@ -112,6 +103,12 @@ begin
       ctr <= (others=>'0');
       status_internal <= RDY;
     elsif RISING_EDGE(clk) then
+      status_internal <= status_internal;
+      ctr <= ctr;
+      nonce_pipe <= nonce_pipe;
+      stage_pipe <= stage_pipe;
+      nonce <= nonce;
+      irq <= '0';
 
       case status_internal is
         when RDY =>
@@ -132,6 +129,7 @@ begin
             stage_pipe <= ('0') & (stage_pipe(stage_pipe'low to stage_pipe'high - 1));
           end if;
 
+          -- FIXME NONCE_MAX will not be evaluated, because we'll be in IDLE status then
           if stage_pipe(stage_pipe'high) = '1' then
             if is_candidate(nlz, result_1) then
               nonce_candidate <= nonce_pipe(nonce_pipe'high);
@@ -149,7 +147,8 @@ begin
   with status_internal select
     status <= (0=>'1', others=>'0') when RDY,
               (1=>'1', others=>'0') when BUSY,
-              (others=>'0') when IDLE;
+              (others=>'0') when IDLE,
+              (others=>'1') when others;
 
   padded_msg_0 <= to_block512(prefix & std_ulogic_vector(nonce_pipe(0)) & PADDING_0);
   padded_msg_1 <= to_block512(to_suv256(result_0) & PADDING_1);
