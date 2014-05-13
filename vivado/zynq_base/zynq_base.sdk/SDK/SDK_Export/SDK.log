@@ -1,0 +1,6 @@
+19:54:58 INFO  : Processing command line option -hwspec /home/martin/Documents/ElecDesign/btc/vivado/zynq_base/zynq_base.sdk/SDK/SDK_Export/hw/zynq_design.xml.
+19:57:02 INFO  : Invoking Bootgen: 
+19:57:02 INFO  : Bootgen command execution is done.
+20:06:48 INFO  : Specified output file already exists
+20:06:49 INFO  : Invoking Bootgen: 
+20:06:50 INFO  : Bootgen command execution is done.
