@@ -22,7 +22,11 @@ entity org is
     nonce_candidate: out unsigned(31 downto 0);
     nonce_current: out unsigned(31 downto 0);
     status: out std_ulogic_vector(31 downto 0);
-    irq: out std_ulogic
+    irq: out std_ulogic;
+    dbg1: out std_ulogic_vector(31 downto 0);
+    dbg2: out std_ulogic_vector(31 downto 0);
+    step: in std_ulogic;
+    rst_step: out std_ulogic
   );
 end entity;
 
@@ -74,27 +78,37 @@ architecture arc of org is
     end loop;
     return res;
   end function;
+  function mask_candidate(nlz: unsigned(7 downto 0)) return std_ulogic_vector is
+    constant nlzi: integer := to_integer(nlz);
+    variable mask: std_ulogic_vector(255 downto 0);
+  begin
+    for i in 0 to 31 loop
+      for j in 0 to 7 loop
+        mask(i*8 + j) := '1' when (i*8) + (7-j) < nlzi else '0';
+      end loop;
+    end loop;
+    return mask;
+  end function;
 begin
 
   sha_0: entity work.hw(arc) port map(clk, rst_0, load_0, h_in, padded_msg_0, result_0);
   sha_1: entity work.hw(arc) port map(clk, rst_1, load_1, H0,   padded_msg_1, result_1);
 
   process(clk)
+      
     function is_candidate(nlz: unsigned(7 downto 0); candidate: block256) return boolean is
-      constant nlzi: integer := to_integer(nlz);
-      variable mask: std_ulogic_vector(255 downto 0);
+      variable mask: std_ulogic_vector(255 downto 0) := mask_candidate(nlz);
+      variable c: std_ulogic_vector(0 to 255) := to_suv256(candidate);
     begin
-      for i in 0 to 31 loop
-        for j in 0 to 7 loop
-          mask(i*8 + j) := '1' when (i*8) + (7-j) < nlzi else '0';
-        end loop;
-      end loop;
-      return (mask and to_suv256(candidate)) = (0 to 255=>'0');
+      return (mask and c) = (0 to 255=>'0');
     end function;
   begin
     if rising_edge(clk) then
       -- the interrupt line is low by default and will only be hight for one clock cycle when an interrupt has to be signaled
       irq <= '0';
+      rst_step <= '0';
+      if step = '1' then 
+            rst_step <= '1';
 
       -- the pipelines have to keep mooving, independent from the current state (status_internal)
       nonce_pipe <= nonce & nonce_pipe(nonce_pipe'low to nonce_pipe'high - 1);
@@ -148,6 +162,7 @@ begin
           status_internal <= FOUND;
         end if;
       end if;
+      end if;
     end if;
   end process;
 
@@ -169,5 +184,7 @@ begin
   load_0 <= stage_pipe(0);
   load_1 <= stage_pipe(66);
   nonce_current <= nonce;
+  dbg1 <= std_ulogic_vector(result_1(7));
+  dbg2 <= mask_candidate(nlz)(31 downto 0);
 
 end architecture;

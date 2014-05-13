@@ -21,6 +21,7 @@
 
 #	define SHA256_ACCEL_GET_NONCE_CURRENT _IOR(SHA256_ACCEL_MAGIC, 6, __u32 *)
 #	define SHA256_ACCEL_GET_STATUS _IOR(SHA256_ACCEL_MAGIC, 7, __u32 *)
+#	define SHA256_ACCEL_DEBUG _IOWR(SHA256_ACCEL_MAGIC, 8, __u32 **)
 
 struct sha256_accel_msg_s {
 	__u32 status;

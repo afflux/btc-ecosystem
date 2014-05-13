@@ -16,6 +16,20 @@ struct btc_s {
 	__u32 Nonce;
 }__attribute__((packed));
 
+static inline void debug_step(int fd) {
+	static const unsigned int n = 20;
+	__u32 dbg[n];
+	int ret;
+	unsigned int i;
+
+	ret = ioctl(fd, SHA256_ACCEL_DEBUG, &dbg);
+	if (ret)
+		perror("ioctl DEBUG");
+	else
+		for (i = 0; i < n; ++i)
+			printf("%3u %08x\n", i, dbg[i]);
+}
+
 int main(int argc, char *argv[]) {
 	fd_set set;
 	struct timeval timeout;
@@ -29,6 +43,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	ioctl(fd, SHA256_ACCEL_RESET);
+	debug_step(fd);
 
 	do {
 		ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
@@ -42,6 +57,7 @@ int main(int argc, char *argv[]) {
 	ioctl(fd, SHA256_ACCEL_SET_NUM_LEADING_ZEROS, (__u8) 24);
 
 	ioctl(fd, SHA256_ACCEL_START);
+	debug_step(fd);
 
 	while(1) {
 		FD_ZERO(&set);
@@ -52,6 +68,7 @@ int main(int argc, char *argv[]) {
 		ret = select(1, &set, NULL, NULL, &timeout);
 
 		if (ret == 0) {
+			debug_step(fd);
 			ret = ioctl(fd, SHA256_ACCEL_GET_NONCE_CURRENT, &nonce_current);
 			if (ret)
 				perror("ioctl GET_NONCE_CURRENT");

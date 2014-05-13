@@ -98,6 +98,8 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 	
 	signal internal_irq: std_ulogic;
 	signal external_irq: std_logic;
+    signal internal_dbg1, internal_dbg2: std_ulogic_vector(31 downto 0);
+    signal internal_step, internal_rst_step: std_ulogic;
 begin
 	-- I/O Connections assignments
 	sha256_accel_axi_awready <= axi_awready;
@@ -178,9 +180,12 @@ begin
 	-- and the slave is ready to accept the write address and write data.
 	slv_reg_wren <= axi_wready and sha256_accel_axi_wvalid and axi_awready and sha256_accel_axi_awvalid;
 
-	process (sha256_accel_axi_aclk)
+	process (sha256_accel_axi_aclk, internal_rst_step)
 		variable loc_addr : natural;
 	begin
+	    if internal_rst_step = '1' then
+	        internal_step <= '0';
+	    end if;
 		if rising_edge(sha256_accel_axi_aclk) then
 			sha256_accel_irq_mask <= '0';
 
@@ -225,6 +230,10 @@ begin
 						if (sha256_accel_axi_wstrb(0) = '1') then
 							sha256_accel_irq_mask <= sha256_accel_axi_wdata(0);
 						end if;
+                    when 19 =>
+                        if (sha256_accel_axi_wstrb(0) = '1') then
+                            internal_step <= sha256_accel_axi_wdata(0);
+                        end if;
 					when others =>
 					end case;
 				end if;
@@ -321,11 +330,11 @@ begin
 			loc_addr := to_integer(axi_araddr(9 downto 2));
 			case loc_addr is
 			when 0 to 7 =>
-				-- sha256_accel_state_in is write only
+				reg_data_out  <= sha256_accel_state_in(loc_addr * 32 + 31 downto loc_addr * 32 );
 			when 8 to 10 =>
-				-- sha256_accel_prefix is write only
+			    reg_data_out  <= sha256_accel_prefix(loc_addr * 32 + 31 downto loc_addr * 32 );
 			when 11 =>
-				-- sha256_accel_num_leading_zero is write only
+			    reg_data_out  <= (X"000000") & std_logic_vector(sha256_accel_num_leading_zero);
 			when 12 =>
 				reg_data_out <= std_logic_vector(sha256_accel_nonce_candidate);
 			when 13 =>
@@ -333,9 +342,15 @@ begin
 			when 14 =>
 				reg_data_out <= sha256_accel_status;
 			when 15 =>
-				-- sha256_accel_control is write only
+				reg_data_out  <= sha256_accel_control;
 			when 16 =>
-				-- sha256_accel_irq_mask is write only
+				reg_data_out  <= (others=>sha256_accel_irq_mask);
+            when 17 =>
+                reg_data_out <= to_stdlogicvector(internal_dbg1);
+            when 18 =>
+                reg_data_out <= to_stdlogicvector(internal_dbg2);
+            when 19 =>
+                reg_data_out <= (others=>internal_step);
 			when others =>
 			end case;
 		end if;
@@ -385,7 +400,11 @@ begin
 		internal_nonce_candidate,
 		internal_nonce_current,
 		internal_status,
-		internal_irq
+		internal_irq,
+		internal_dbg1,
+		internal_dbg2,
+		internal_step,
+		internal_rst_step
 	);
 
 	internal_clk <= sha256_accel_axi_aclk;
