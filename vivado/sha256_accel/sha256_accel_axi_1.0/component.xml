@@ -3,7 +3,7 @@
   <spirit:vendor>makess</spirit:vendor>
   <spirit:library>user</spirit:library>
   <spirit:name>sha256_accel_axi</spirit:name>
-  <spirit:version>1.32</spirit:version>
+  <spirit:version>1.43</spirit:version>
   <spirit:busInterfaces>
     <spirit:busInterface>
       <spirit:name>SHA256_ACCEL_AXI</spirit:name>
@@ -266,7 +266,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>1fa6a8ee</spirit:value>
+            <spirit:value>01c8f145</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -282,7 +282,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>viewChecksum</spirit:name>
-            <spirit:value>ca0e7361</spirit:value>
+            <spirit:value>b6ef72cf</spirit:value>
           </spirit:parameter>
         </spirit:parameters>
       </spirit:view>
@@ -809,15 +809,15 @@
       <xilinx:taxonomies>
         <xilinx:taxonomy>AXI_Peripheral</xilinx:taxonomy>
       </xilinx:taxonomies>
-      <xilinx:displayName>sha256_accel_axi_v1.32</xilinx:displayName>
+      <xilinx:displayName>sha256_accel_axi_v1.43</xilinx:displayName>
       <xilinx:coreRevision>1</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2014-05-12T20:18:12Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2014-05-13T17:24:00Z</xilinx:coreCreationDateTime>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
       <xilinx:xilinxVersion>2014.1</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="a18cea73"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="d5faebd9"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="d9ad5bfa"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="87dc227d"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="28d58aca"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="e0ed7390"/>
     </xilinx:packagingInfo>

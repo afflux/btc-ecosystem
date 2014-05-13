@@ -17,16 +17,14 @@ struct btc_s {
 }__attribute__((packed));
 
 static inline void debug_step(int fd) {
-	static const unsigned int n = 20;
-	__u32 dbg[n];
-	int ret;
-	unsigned int i;
+	__u32 dbg[SHA256_ACCEL_NUM_DBG_REGS];
+	int ret, i;
 
-	ret = ioctl(fd, SHA256_ACCEL_DEBUG, &dbg);
+	ret = ioctl(fd, SHA256_ACCEL_DEBUG, dbg);
 	if (ret)
 		perror("ioctl DEBUG");
 	else
-		for (i = 0; i < n; ++i)
+		for (i = 0; i < SHA256_ACCEL_NUM_DBG_REGS; ++i)
 			printf("%3u %08x\n", i, dbg[i]);
 }
 
@@ -62,8 +60,8 @@ int main(int argc, char *argv[]) {
 	while(1) {
 		FD_ZERO(&set);
 		FD_SET(fd, &set);
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 100000;
 
 		ret = select(1, &set, NULL, NULL, &timeout);
 

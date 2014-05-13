@@ -3,7 +3,7 @@
 <!--                                                         -->
 <!-- Copyright (c) 2001-2013 Xilinx Inc, All rights reserved -->
 
-<Project Version="7" Minor="0" Path="/home/martin/Documents/ElecDesign/btc/vivado/zynq_base/zynq_base.xpr">
+<Project Version="7" Minor="0" Path="/home/martin/Documents/ElecDesign/btc/git/vivado/zynq_base/zynq_base.xpr">
   <DefaultLaunch Dir="$PRUNDIR"/>
   <Configuration>
     <Option Name="Id" Val="037238d560c14fdc9e48761df6046b88"/>

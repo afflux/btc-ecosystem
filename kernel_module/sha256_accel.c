@@ -135,10 +135,9 @@ static unsigned int sha256_accel_poll(struct file *file_ptr, struct poll_table_s
 }
 
 static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsigned long param) {
-	static const unsigned n = 20;
 	void *addr;
 	const void *caddr;
-	unsigned char buf[4*n];
+	unsigned char buf[4*SHA256_ACCEL_NUM_DBG_REGS];
 	__u32 val;
 
 	if (_IOC_TYPE(command) != SHA256_ACCEL_MAGIC)
@@ -202,15 +201,13 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 	case SHA256_ACCEL_DEBUG:
 		addr = (void __user *) param;
 
-		iowrite32(0x0, &sha256_accel_mem[16]);
-
-		if (!access_ok(VERIFY_WRITE, addr, 4*n))
+		if (!access_ok(VERIFY_WRITE, addr, 4*SHA256_ACCEL_NUM_DBG_REGS))
 			return -EFAULT;
 
-		memcpy_toio(buf, &sha256_accel_mem[0], 4*n);
-		copy_to_user(addr, buf, 4*n);
+		memcpy_toio(buf, &sha256_accel_mem[0], 4*SHA256_ACCEL_NUM_DBG_REGS);
+		copy_to_user(addr, buf, 4*SHA256_ACCEL_NUM_DBG_REGS);
 
-		iowrite32(0x1, &sha256_accel_mem[16]);
+		iowrite32(0x1, &sha256_accel_mem[19]);
 
 		break;
 

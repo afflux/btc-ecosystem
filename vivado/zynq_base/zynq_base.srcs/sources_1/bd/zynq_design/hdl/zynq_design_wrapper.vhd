@@ -1,7 +1,7 @@
 --Copyright 1986-2014 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------
 --Tool Version: Vivado v.2014.1 (lin64) Build 881834 Fri Apr  4 13:56:21 MDT 2014
---Date        : Mon May 12 22:18:44 2014
+--Date        : Tue May 13 19:24:34 2014
 --Host        : martin-laptop running 64-bit Ubuntu 14.04 LTS
 --Command     : generate_target zynq_design_wrapper.bd
 --Design      : zynq_design_wrapper

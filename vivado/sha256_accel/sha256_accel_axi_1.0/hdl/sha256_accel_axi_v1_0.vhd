@@ -98,8 +98,8 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 	
 	signal internal_irq: std_ulogic;
 	signal external_irq: std_logic;
-    signal internal_dbg1, internal_dbg2: std_ulogic_vector(31 downto 0);
-    signal internal_step, internal_rst_step: std_ulogic;
+    signal internal_dbg1, internal_dbg2, internal_dbg3, internal_dbg4: std_ulogic_vector(31 downto 0);
+    signal internal_step: std_ulogic;
 begin
 	-- I/O Connections assignments
 	sha256_accel_axi_awready <= axi_awready;
@@ -180,13 +180,12 @@ begin
 	-- and the slave is ready to accept the write address and write data.
 	slv_reg_wren <= axi_wready and sha256_accel_axi_wvalid and axi_awready and sha256_accel_axi_awvalid;
 
-	process (sha256_accel_axi_aclk, internal_rst_step)
+	process (sha256_accel_axi_aclk)
 		variable loc_addr : natural;
 	begin
-	    if internal_rst_step = '1' then
-	        internal_step <= '0';
-	    end if;
 		if rising_edge(sha256_accel_axi_aclk) then
+			internal_step <= '0';
+
 			sha256_accel_irq_mask <= '0';
 
 			if sha256_accel_axi_aresetn = '0' then
@@ -330,11 +329,11 @@ begin
 			loc_addr := to_integer(axi_araddr(9 downto 2));
 			case loc_addr is
 			when 0 to 7 =>
-				reg_data_out  <= sha256_accel_state_in(loc_addr * 32 + 31 downto loc_addr * 32 );
+				reg_data_out <= sha256_accel_state_in(loc_addr * 32 + 31 downto loc_addr * 32 );
 			when 8 to 10 =>
-			    reg_data_out  <= sha256_accel_prefix(loc_addr * 32 + 31 downto loc_addr * 32 );
+			    reg_data_out <= sha256_accel_prefix((loc_addr - 8) * 32 + 31 downto (loc_addr - 8) * 32 );
 			when 11 =>
-			    reg_data_out  <= (X"000000") & std_logic_vector(sha256_accel_num_leading_zero);
+			    reg_data_out <= (X"000000") & std_logic_vector(sha256_accel_num_leading_zero);
 			when 12 =>
 				reg_data_out <= std_logic_vector(sha256_accel_nonce_candidate);
 			when 13 =>
@@ -342,14 +341,18 @@ begin
 			when 14 =>
 				reg_data_out <= sha256_accel_status;
 			when 15 =>
-				reg_data_out  <= sha256_accel_control;
+				reg_data_out <= sha256_accel_control;
 			when 16 =>
-				reg_data_out  <= (others=>sha256_accel_irq_mask);
+				reg_data_out <= (others=>sha256_accel_irq_mask);
             when 17 =>
                 reg_data_out <= to_stdlogicvector(internal_dbg1);
             when 18 =>
                 reg_data_out <= to_stdlogicvector(internal_dbg2);
             when 19 =>
+                reg_data_out <= to_stdlogicvector(internal_dbg3);
+            when 20 =>
+                reg_data_out <= to_stdlogicvector(internal_dbg4);
+            when 21 =>
                 reg_data_out <= (others=>internal_step);
 			when others =>
 			end case;
@@ -403,8 +406,9 @@ begin
 		internal_irq,
 		internal_dbg1,
 		internal_dbg2,
-		internal_step,
-		internal_rst_step
+		internal_dbg3,
+		internal_dbg4,
+		internal_step
 	);
 
 	internal_clk <= sha256_accel_axi_aclk;

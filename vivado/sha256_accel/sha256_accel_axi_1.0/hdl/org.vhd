@@ -25,8 +25,9 @@ entity org is
     irq: out std_ulogic;
     dbg1: out std_ulogic_vector(31 downto 0);
     dbg2: out std_ulogic_vector(31 downto 0);
-    step: in std_ulogic;
-    rst_step: out std_ulogic
+    dbg3: out std_ulogic_vector(31 downto 0);
+    dbg4: out std_ulogic_vector(31 downto 0);
+    step: in std_ulogic
   );
 end entity;
 
@@ -51,6 +52,8 @@ architecture arc of org is
   signal h_in: block256;
   signal padded_msg_0, padded_msg_1: block512;
   signal result_0, result_1: block256;
+
+  signal clk_counter: unsigned(31 downto 0);
 
   function to_block512(d : std_ulogic_vector(0 to 511)) return block512 is
     variable res : block512;
@@ -91,11 +94,10 @@ architecture arc of org is
   end function;
 begin
 
-  sha_0: entity work.hw(arc) port map(clk, rst_0, load_0, h_in, padded_msg_0, result_0);
-  sha_1: entity work.hw(arc) port map(clk, rst_1, load_1, H0,   padded_msg_1, result_1);
+  sha_0: entity work.hw(arc) port map(clk, rst_0, load_0, h_in, padded_msg_0, result_0, step);
+  sha_1: entity work.hw(arc) port map(clk, rst_1, load_1, H0,   padded_msg_1, result_1, step);
 
   process(clk)
-      
     function is_candidate(nlz: unsigned(7 downto 0); candidate: block256) return boolean is
       variable mask: std_ulogic_vector(255 downto 0) := mask_candidate(nlz);
       variable c: std_ulogic_vector(0 to 255) := to_suv256(candidate);
@@ -106,22 +108,24 @@ begin
     if rising_edge(clk) then
       -- the interrupt line is low by default and will only be hight for one clock cycle when an interrupt has to be signaled
       irq <= '0';
-      rst_step <= '0';
-      if step = '1' then 
-            rst_step <= '1';
-
-      -- the pipelines have to keep mooving, independent from the current state (status_internal)
-      nonce_pipe <= nonce & nonce_pipe(nonce_pipe'low to nonce_pipe'high - 1);
-      stage_pipe <= '0' & stage_pipe(stage_pipe'low to stage_pipe'high - 1);
-      ctr <= (ctr + 1) mod 16;
-
       if ctrl(RST_IDX) = '1' then
         stage_pipe <= (others=>'0');
         nonce_pipe <= (others=>(others=>'0'));
         nonce <= (others=>'0');
         ctr <= (others=>'0');
         status_internal <= RDY;
-      else
+
+        clk_counter <= (others => '0');
+      elsif step = '1' then
+
+        clk_counter <= clk_counter + 1;
+
+        -- the pipelines have to keep mooving, independent from the current state (status_internal)
+        nonce_pipe <= nonce & nonce_pipe(nonce_pipe'low to nonce_pipe'high - 1);
+        stage_pipe <= '0' & stage_pipe(stage_pipe'low to stage_pipe'high - 1);
+        ctr <= (ctr + 1) mod 16;
+
+
         case status_internal is
           when RDY =>
             if ctrl(RUN_IDX) = '1' then
@@ -162,7 +166,6 @@ begin
           status_internal <= FOUND;
         end if;
       end if;
-      end if;
     end if;
   end process;
 
@@ -186,5 +189,7 @@ begin
   nonce_current <= nonce;
   dbg1 <= std_ulogic_vector(result_1(7));
   dbg2 <= mask_candidate(nlz)(31 downto 0);
+  dbg3 <= std_ulogic_vector(result_1(7)) and mask_candidate(nlz)(31 downto 0);
+  dbg4 <= std_ulogic_vector(clk_counter);
 
 end architecture;

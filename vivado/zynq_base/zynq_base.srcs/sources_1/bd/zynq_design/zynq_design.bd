@@ -74,7 +74,7 @@
       </spirit:componentInstance>
       <spirit:componentInstance>
         <spirit:instanceName>sha256_accel_axi_0</spirit:instanceName>
-        <spirit:componentRef spirit:library="user" spirit:name="sha256_accel_axi" spirit:vendor="makess" spirit:version="1.32"/>
+        <spirit:componentRef spirit:library="user" spirit:name="sha256_accel_axi" spirit:vendor="makess" spirit:version="1.43"/>
         <spirit:configurableElementValues>
           <spirit:configurableElementValue spirit:referenceId="bd:xciName">zynq_design_sha256_accel_axi_0_0</spirit:configurableElementValue>
         </spirit:configurableElementValues>

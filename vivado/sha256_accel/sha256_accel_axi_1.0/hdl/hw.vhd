@@ -14,7 +14,8 @@ entity hw is
        load: in std_ulogic;
        hin: in block256;
        padded_msg: in block512;
-       state: out block256);
+       state: out block256;
+       step: in std_ulogic);
 end entity hw;
 
 
@@ -36,7 +37,7 @@ begin
       -- states <= (others=>(others=>(others=>'0')));
       w <= (others=>(others=>'0'));
       stage_enable <= (others=>'0');
-    elsif RISING_EDGE(clk) then
+    elsif RISING_EDGE(clk) and step = '1' then
       w <= w;
 
       if load = '1' then
@@ -73,7 +74,7 @@ begin
         end function combine_state;
 
       begin
-        if RISING_EDGE(clk) then
+        if RISING_EDGE(clk)  and step = '1' then
 		  states(4) <= states(4);
           if stage_enable(4*16) = '1' then
             states(4) <= combine_state(states(3), hin_pipe(4*16));
@@ -88,7 +89,7 @@ begin
         variable w_in: w32;
         variable k_in: w32;
       begin
-        if RISING_EDGE(clk) then
+        if RISING_EDGE(clk)  and step = '1' then
 		  states(i) <= states(i);
           case stage_enable(i*16 to i*16+15) is
             when "1000000000000000" =>
