@@ -12,10 +12,10 @@ else
 	CCPREFIX_ARM=arm-none-eabi-
 endif
 
-.PHONY: all clean all-arm clean-arm all-intel clean-intel
+.PHONY: all clean all-arm clean-arm all-intel clean-intel scp
 
-all: all-intel
-clean: clean-intel
+all: all-arm
+clean: clean-arm
 
 all-arm:
 	make -C $(KERNEL_ARM) ARCH=arm CROSS_COMPILE=$(CCPREFIX_ARM) CFLAGS=$(CFLAGS) M=$(PWD) modules
@@ -26,3 +26,6 @@ all-intel:
 	make -C $(KERNEL_INTEL) M=$(PWD) modules
 clean-intel:
 	make -C $(KERNEL_INTEL) M=$(PWD) clean
+
+scp: all
+	scp sha256_accel.ko linaro:

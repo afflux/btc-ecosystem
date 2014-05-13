@@ -7,7 +7,6 @@ use global_lib.numeric_std.all;
 entity sha256_accel_axi_v1_0 is
 	port (
 		sha256_accel_irq : out std_logic;
-        sha256_accel_clk : in std_logic;
 
 		-- Ports of Axi Slave Bus Interface SHA256_ACCEL_AXI
 
@@ -95,7 +94,6 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 
     signal internal_status : std_ulogic_vector(31 downto 0);
     signal internal_control : std_ulogic_vector(31 downto 0);
-    signal internal_irq_mask : std_ulogic;
     signal internal_clk: std_ulogic;
 	
 	signal internal_irq: std_ulogic;
@@ -184,14 +182,14 @@ begin
 		variable loc_addr : natural;
 	begin
 		if rising_edge(sha256_accel_axi_aclk) then
+			sha256_accel_irq_mask <= '0';
+
 			if sha256_accel_axi_aresetn = '0' then
 				sha256_accel_state_in <= (others => '0');
 				sha256_accel_prefix <= (others => '0');
 				sha256_accel_num_leading_zero <= (others => '0');
 				sha256_accel_control <= (others => '0');
-				sha256_accel_irq_mask <= '0';
 			else
-				sha256_accel_irq_mask <= '0';
 				loc_addr := to_integer(axi_awaddr(9 downto 2));
 				if (slv_reg_wren = '1') then
 					case loc_addr is
@@ -309,22 +307,10 @@ begin
 	end process;
 
 	-- Implement memory mapped register select and read logic generation
-	-- Slave register read enable is asserted when valid address is available
-	-- and the slave is ready to accept the read address.
+	-- Slave register read enable is asserted when valid address is available and the slave is ready to accept the read address.
 	slv_reg_rden <= axi_arready and sha256_accel_axi_arvalid and (not axi_rvalid);
 
-	process (
-		sha256_accel_state_in,
-		sha256_accel_prefix,
-		sha256_accel_num_leading_zero,
-		sha256_accel_nonce_candidate,
-		sha256_accel_nonce_current,
-		sha256_accel_status,
-		sha256_accel_control,
-		sha256_accel_irq_mask,
-		axi_araddr,
-		sha256_accel_axi_aresetn,
-		slv_reg_rden)
+	process
 		variable loc_addr : natural;
 	begin
 		if sha256_accel_axi_aresetn = '0' then
@@ -373,41 +359,42 @@ begin
 		end if;
 	end process;
 	
-	process(sha256_accel_axi_aclk)
+	process (sha256_accel_axi_aclk)
 	begin
-		if RISING_EDGE(sha256_accel_axi_aclk) then
+		if rising_edge(sha256_accel_axi_aclk) then
 			if sha256_accel_axi_aresetn = '0' then
 				external_irq <= '0';
-			elsif sha256_accel_irq_mask = '1' then
-				external_irq <= '0';
-			elsif internal_irq = '1' then
-				external_irq <= '1';
 			else
-				external_irq <= external_irq;
+				if sha256_accel_irq_mask = '1' then
+					external_irq <= '0';
+				elsif internal_irq = '1' then
+					external_irq <= '1';
+				end if;
 			end if;
 		end if;
 	end process;
-           
-   sha256_accel_irq <= external_irq;
-	
-	
-	inst: entity work.org(arc) port map(internal_clk,
-	                                   internal_state_in,
-	                                   internal_prefix,
-	                                   internal_num_leading_zero,
-	                                   internal_control,
-	                                   internal_nonce_candidate,
-	                                   internal_nonce_current,
-	                                   internal_status,
-	                                   internal_irq);
-	                                   
-    internal_clk <= sha256_accel_clk;
-    internal_state_in <= to_stdulogicvector(sha256_accel_state_in);
-    internal_prefix <= to_stdulogicvector(sha256_accel_prefix);
-    internal_num_leading_zero <= sha256_accel_num_leading_zero;
-    internal_control <= to_stdulogicvector(sha256_accel_control);
-    sha256_accel_nonce_candidate <= internal_nonce_candidate;
-    sha256_accel_nonce_current <= internal_nonce_current;
-    sha256_accel_status <= to_stdlogicvector(internal_status);
+
+	sha256_accel_irq <= external_irq;
+
+	inst: entity work.org(arc) port map(
+		internal_clk,
+		internal_state_in,
+		internal_prefix,
+		internal_num_leading_zero,
+		internal_control,
+		internal_nonce_candidate,
+		internal_nonce_current,
+		internal_status,
+		internal_irq
+	);
+
+	internal_clk <= sha256_accel_axi_aclk;
+	internal_state_in <= to_stdulogicvector(sha256_accel_state_in);
+	internal_prefix <= to_stdulogicvector(sha256_accel_prefix);
+	internal_num_leading_zero <= sha256_accel_num_leading_zero;
+	internal_control <= to_stdulogicvector(sha256_accel_control);
+	sha256_accel_nonce_candidate <= internal_nonce_candidate;
+	sha256_accel_nonce_current <= internal_nonce_current;
+	sha256_accel_status <= to_stdlogicvector(internal_status);
 
 end architecture;

@@ -29,11 +29,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	ioctl(fd, SHA256_ACCEL_RESET);
+
 	do {
 		ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
-		perror("ioctl");
+		if (ret)
+			perror("ioctl GET_STATUS");
 		printf("status: %08x\n", status);
-	}while (status != 1u);
+	} while (status != 0x1);
 
 	ioctl(fd, SHA256_ACCEL_SET_STATE_IN, "\x95\x24\xc5\x93\x05\xc5\x67\x13\x16\xe6\x69\xba\x2d\x28\x10\xa0\x07\xe8\x6e\x37\x2f\x56\xa9\xda\xcd\x5b\xce\x69\x7a\x78\xda\x2d");
 	ioctl(fd, SHA256_ACCEL_SET_PREFIX, "\xf1\xfc\x12\x2b\xc7\xf5\xd7\x4d\xf2\xb9\x44\x1a");
@@ -51,7 +53,13 @@ int main(int argc, char *argv[]) {
 
 		if (ret == 0) {
 			ret = ioctl(fd, SHA256_ACCEL_GET_NONCE_CURRENT, &nonce_current);
+			if (ret)
+				perror("ioctl GET_NONCE_CURRENT");
+
 			ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
+			if (ret)
+				perror("ioctl GET_STATUS");
+
 			printf("status: %08x, nonce current: %08x\n", status, nonce_current);
 		} else if (ret == -1) {
 			perror("select");
