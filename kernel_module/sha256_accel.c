@@ -19,6 +19,17 @@
 #define SHA256_ACCEL_ADDR_LEN 68
 #define SHA256_ACCEL_IRQ 61
 
+#define REG_STATE_IN 0
+#define REG_PREFIX 8
+#define REG_DIFFICULTY_MASK 11
+#define REG_NONCE_CANDIDATE 19
+#define REG_NONCE_CURRENT 20
+#define REG_STATUS 21
+#define REG_CONTROL 22
+#define REG_IRQ_MASK 23
+#define REG_DEBUG 24
+#define REG_STEP 49
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Keßler");
 MODULE_DESCRIPTION("make the sha256 accelerator usable in user space programs");
@@ -71,7 +82,7 @@ static bool sha256_accel_msg_dequeue(void) {
 static size_t sha256_accel_msg_avail(void) {
 	if (sha256_accel_msg)
 		/* if there is data in the current message, return that */
-		return sizeof(*sha256_accel_msg);
+		return sizeof(sha256_accel_msg->payload);
 	else if (sha256_accel_msg_dequeue())
 		/* otherwise try to dequeue the next message and do a tail-recursive call */
 		return sha256_accel_msg_avail();
@@ -108,7 +119,7 @@ static ssize_t sha256_accel_read(struct file *file_ptr, char __user *buffer, siz
 	copy = (avail >= length) ? length : avail;
 
 	/* copy the data over to the user and derive the amount of data that was copied */
-	copied = copy_to_user(buffer, sha256_accel_msg, copy);
+	copied = copy_to_user(buffer, &sha256_accel_msg->payload, copy);
 	ret = (copied == 0) ? copy : copied;
 
 	/* we have copied data, so this message is done and we can try to dequeue the next one. */
@@ -145,11 +156,11 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 
 	switch(command) {
 	case SHA256_ACCEL_RESET:
-		iowrite32(0x1, &sha256_accel_mem[15]);
+		iowrite8(0x1, &sha256_accel_mem[REG_CONTROL]);
 		break;
 
 	case SHA256_ACCEL_START:
-		iowrite32(0x2, &sha256_accel_mem[15]);
+		iowrite8(0x2, &sha256_accel_mem[REG_CONTROL]);
 		break;
 
 	case SHA256_ACCEL_SET_STATE_IN:
@@ -159,7 +170,7 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 			return -EFAULT;
 
 		copy_from_user(buf, caddr, 32);
-		memcpy_toio(&sha256_accel_mem[0], buf, 32);
+		memcpy_toio(&sha256_accel_mem[REG_STATE_IN], buf, 32);
 		break;
 
 	case SHA256_ACCEL_SET_PREFIX:
@@ -169,20 +180,26 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 			return -EFAULT;
 
 		copy_from_user(buf, caddr, 12);
-		memcpy_toio(&sha256_accel_mem[8], buf, 12);
+		memcpy_toio(&sha256_accel_mem[REG_PREFIX], buf, 12);
 		break;
 
-	case SHA256_ACCEL_SET_NUM_LEADING_ZEROS:
-		iowrite8((const __u8) param, &sha256_accel_mem[11]);
+	case SHA256_ACCEL_SET_DIFFICULTY_MASK:
+		caddr = (const void __user *) param;
+
+		if (!access_ok(VERIFY_READ, caddr, 32))
+			return -EFAULT;
+
+		copy_from_user(buf, caddr, 32);
+		memcpy_toio(&sha256_accel_mem[REG_DIFFICULTY_MASK], buf, 32);
 		break;
 
 	case SHA256_ACCEL_SET_CONTROL:
-		iowrite32((const __u32) param, &sha256_accel_mem[15]);
+		iowrite32((const __u32) param, &sha256_accel_mem[REG_CONTROL]);
 		break;
 
 	case SHA256_ACCEL_GET_NONCE_CURRENT:
 		addr = (void __user *) param;
-		val = ioread32(&sha256_accel_mem[13]);
+		val = ioread32(&sha256_accel_mem[REG_NONCE_CURRENT]);
 
 		if (IS_ERR_VALUE(put_user(val, (__u32 *) addr)))
 			 return -EFAULT;
@@ -191,23 +208,26 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 
 	case SHA256_ACCEL_GET_STATUS:
 		addr = (void __user *) param;
-		val = ioread32(&sha256_accel_mem[14]);
+		val = ioread32(&sha256_accel_mem[REG_STATUS]);
 
 		if (IS_ERR_VALUE(put_user(val, (__u32 *) addr)))
 			 return -EFAULT;
 
 		break;
 
-	case SHA256_ACCEL_DEBUG:
+	case SHA256_ACCEL_GET_DEBUG:
 		addr = (void __user *) param;
 
 		if (!access_ok(VERIFY_WRITE, addr, 4*SHA256_ACCEL_NUM_DBG_REGS))
 			return -EFAULT;
 
-		memcpy_toio(buf, &sha256_accel_mem[0], 4*SHA256_ACCEL_NUM_DBG_REGS);
+		memcpy_fromio(buf, sha256_accel_mem, 4*SHA256_ACCEL_NUM_DBG_REGS);
 		copy_to_user(addr, buf, 4*SHA256_ACCEL_NUM_DBG_REGS);
 
-		iowrite32(0x1, &sha256_accel_mem[19]);
+		break;
+
+	case SHA256_ACCEL_STEP:
+		iowrite32(0x1, &sha256_accel_mem[REG_STEP]);
 
 		break;
 
@@ -245,13 +265,13 @@ static const struct file_operations sha256_accel_fops = {
 static irqreturn_t sha256_accel_irq(int irqid, void *dev_id) {
 	struct sha256_accel_msg_list_s *msg;
 
-	DBG(KERN_INFO, "I just got interrupted.\n");
+	DBG(KERN_INFO, "I just got interrupted. %zu\n", sha256_accel_msg_avail());
 
 	msg = (struct sha256_accel_msg_list_s *) kmalloc(sizeof(*msg), GFP_KERNEL);
-	msg->payload.status = ioread32(&sha256_accel_mem[14]);
-	msg->payload.nonce_candidate = ioread32(&sha256_accel_mem[12]);
+	msg->payload.status = ioread32(&sha256_accel_mem[REG_STATUS]);
+	msg->payload.nonce_candidate = ioread32(&sha256_accel_mem[REG_NONCE_CANDIDATE]);
 
-	iowrite32(0x1, &sha256_accel_mem[16]);
+	iowrite32(0x1, &sha256_accel_mem[REG_IRQ_MASK]);
 
 	DBG(KERN_INFO, "status=%08x nc=%08x\n", msg->payload.status, msg->payload.nonce_candidate);
 
@@ -260,7 +280,7 @@ static irqreturn_t sha256_accel_irq(int irqid, void *dev_id) {
 	mutex_unlock(&sha256_accel_msg_mutex);
 
 	wake_up(&sha256_accel_queue);
-	DBG(KERN_INFO, "cya l8er.\n");
+	DBG(KERN_INFO, "cya l8er. %zu\n", sha256_accel_msg_avail());
 
 	return IRQ_HANDLED;
 }
@@ -329,7 +349,7 @@ static void __exit sha256_accel_exit(void) {
 		kfree(sha256_accel_msg);
 
 	// turn off the accelerator (so it doesn't generate interrupts anymore
-	iowrite32(0x1, &sha256_accel_mem[15]);
+	iowrite32(0x1, &sha256_accel_mem[REG_CONTROL]);
 
 	mutex_lock(&sha256_accel_msg_mutex);
 	while (!list_empty(&sha256_accel_msg_list)) {

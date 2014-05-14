@@ -19,7 +19,7 @@ all-intel: $(EXEC)
 clean:
 	rm -rf $(EXEC) $(OBJS)
 
-%.o: %.c
+%.o: %.c $(INCLUDES)/sha256_accel.h
 	$(CC) -o $@ -c $(CFLAGS) -I $(INCLUDES) $<
 
 $(EXEC): $(OBJS)

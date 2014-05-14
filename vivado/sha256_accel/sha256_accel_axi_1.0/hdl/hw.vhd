@@ -30,31 +30,32 @@ architecture arc of hw is
   signal hin_pipe: state_pipe(stage_enable'range);
 begin
 
-  process(clk, rst)
+  process(clk)
   begin
-    if rst = '1' then
-      hin_pipe <= (others=>(others=>(others=>'0')));
-      -- states <= (others=>(others=>(others=>'0')));
-      w <= (others=>(others=>'0'));
-      stage_enable <= (others=>'0');
-    elsif RISING_EDGE(clk) and step = '1' then
-      w <= w;
+    if RISING_EDGE(clk) then
+      if rst = '1' then
+        hin_pipe <= (others=>(others=>(others=>'0')));
+        w <= (others=>(others=>'0'));
+        stage_enable <= (others=>'0');
+      elsif step = '1' then
+        w <= w;
 
-      if load = '1' then
-        -- parallel load of the first 16 message blocks
-        w(padded_msg'range) <= padded_msg;
-      end if;
-
-      hin_pipe <= (hin) & hin_pipe(hin_pipe'low to hin_pipe'high - 1);
-      stage_enable <= (load) & (stage_enable(stage_enable'low to stage_enable'high -1));
-
-      for i in 16 to w'high loop
-        -- w_16 can be computed in the first cycle, offset accordingly
-        if stage_enable(i - 16) = '1' then
-          -- one iteration of message scheduling
-          w(i) <= ms1(w(i - 2), w(i - 7), w(i - 15), w(i - 16));
+        if load = '1' then
+          -- parallel load of the first 16 message blocks
+          w(padded_msg'range) <= padded_msg;
         end if;
-      end loop;
+
+        hin_pipe <= (hin) & hin_pipe(hin_pipe'low to hin_pipe'high - 1);
+        stage_enable <= (load) & (stage_enable(stage_enable'low to stage_enable'high -1));
+
+        for i in 16 to w'high loop
+          -- w_16 can be computed in the first cycle, offset accordingly
+          if stage_enable(i - 16) = '1' then
+            -- one iteration of message scheduling
+            w(i) <= ms1(w(i - 2), w(i - 7), w(i - 15), w(i - 16));
+          end if;
+        end loop;
+      end if;
 
     end if;
   end process;
@@ -74,10 +75,13 @@ begin
         end function combine_state;
 
       begin
-        if RISING_EDGE(clk)  and step = '1' then
-		  states(4) <= states(4);
-          if stage_enable(4*16) = '1' then
-            states(4) <= combine_state(states(3), hin_pipe(4*16));
+        if RISING_EDGE(clk) then
+          if rst = '1' then
+            states(4) <= (others=>(others=>'0'));
+          elsif step = '1' then
+            if stage_enable(4*16) = '1' then
+              states(4) <= combine_state(states(3), hin_pipe(4*16));
+            end if;
           end if;
         end if;
       end process;
@@ -89,92 +93,95 @@ begin
         variable w_in: w32;
         variable k_in: w32;
       begin
-        if RISING_EDGE(clk)  and step = '1' then
-		  states(i) <= states(i);
-          case stage_enable(i*16 to i*16+15) is
-            when "1000000000000000" =>
-              if i = 0 then
-                state_in := hin_pipe(0);
-                w_in := w(0);
-                k_in := k(0);
-              else
-                state_in := states(i - 1);
-                w_in := w(i*16 + 0);
-                k_in := k(i*16 + 0);
-              end if;
-            when "0100000000000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 1);
-              k_in := k(i*16 + 1);
-            when "0010000000000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 2);
-              k_in := k(i*16 + 2);
-            when "0001000000000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 3);
-              k_in := k(i*16 + 3);
-            when "0000100000000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 4);
-              k_in := k(i*16 + 4);
-            when "0000010000000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 5);
-              k_in := k(i*16 + 5);
-            when "0000001000000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 6);
-              k_in := k(i*16 + 6);
-            when "0000000100000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 7);
-              k_in := k(i*16 + 7);
-            when "0000000010000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 8);
-              k_in := k(i*16 + 8);
-            when "0000000001000000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 9);
-              k_in := k(i*16 + 9);
-            when "0000000000100000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 10);
-              k_in := k(i*16 + 10);
-            when "0000000000010000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 11);
-              k_in := k(i*16 + 11);
-            when "0000000000001000" =>
-              state_in := states(i);
-              w_in := w(i*16 + 12);
-              k_in := k(i*16 + 12);
-            when "0000000000000100" =>
-              state_in := states(i);
-              w_in := w(i*16 + 13);
-              k_in := k(i*16 + 13);
-            when "0000000000000010" =>
-              state_in := states(i);
-              w_in := w(i*16 + 14);
-              k_in := k(i*16 + 14);
-            when "0000000000000001" =>
-              state_in := states(i);
-              w_in := w(i*16 + 15);
-              k_in := k(i*16 + 15);
-            when "0000000000000000" =>
-              state_in := (others=>(others=>'X'));
-              w_in := (others=>'X');
-              k_in := (others=>'X');
-            when others =>
-              -- pragma synthesis_off
-              report "invalid stage enable vector" severity error;
-              -- pragma synthesis_on
-              state_in := (others=>(others=>'X'));
-              w_in := (others=>'X');
-              k_in := (others=>'X');
-          end case;
-          states(i) <= cf1(state_in, w_in, k_in);
+        if RISING_EDGE(clk) then
+          if rst = '1' then
+            states(i) <= (others=>(others=>'0'));
+          elsif step = '1' then
+            case stage_enable(i*16 to i*16+15) is
+              when "1000000000000000" =>
+                if i = 0 then
+                  state_in := hin_pipe(0);
+                  w_in := w(0);
+                  k_in := k(0);
+                else
+                  state_in := states(i - 1);
+                  w_in := w(i*16 + 0);
+                  k_in := k(i*16 + 0);
+                end if;
+              when "0100000000000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 1);
+                k_in := k(i*16 + 1);
+              when "0010000000000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 2);
+                k_in := k(i*16 + 2);
+              when "0001000000000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 3);
+                k_in := k(i*16 + 3);
+              when "0000100000000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 4);
+                k_in := k(i*16 + 4);
+              when "0000010000000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 5);
+                k_in := k(i*16 + 5);
+              when "0000001000000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 6);
+                k_in := k(i*16 + 6);
+              when "0000000100000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 7);
+                k_in := k(i*16 + 7);
+              when "0000000010000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 8);
+                k_in := k(i*16 + 8);
+              when "0000000001000000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 9);
+                k_in := k(i*16 + 9);
+              when "0000000000100000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 10);
+                k_in := k(i*16 + 10);
+              when "0000000000010000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 11);
+                k_in := k(i*16 + 11);
+              when "0000000000001000" =>
+                state_in := states(i);
+                w_in := w(i*16 + 12);
+                k_in := k(i*16 + 12);
+              when "0000000000000100" =>
+                state_in := states(i);
+                w_in := w(i*16 + 13);
+                k_in := k(i*16 + 13);
+              when "0000000000000010" =>
+                state_in := states(i);
+                w_in := w(i*16 + 14);
+                k_in := k(i*16 + 14);
+              when "0000000000000001" =>
+                state_in := states(i);
+                w_in := w(i*16 + 15);
+                k_in := k(i*16 + 15);
+              when "0000000000000000" =>
+                state_in := (others=>(others=>'X'));
+                w_in := (others=>'X');
+                k_in := (others=>'X');
+              when others =>
+                -- pragma synthesis_off
+                report "invalid stage enable vector" severity error;
+                -- pragma synthesis_on
+                state_in := (others=>(others=>'X'));
+                w_in := (others=>'X');
+                k_in := (others=>'X');
+            end case;
+            states(i) <= cf1(state_in, w_in, k_in);
+          end if;
         end if;
       end process;
     end generate GEN_LOOP;
@@ -182,4 +189,4 @@ begin
 
   state <= states(states'high);
 
-end architecture arc;
+end architecture;

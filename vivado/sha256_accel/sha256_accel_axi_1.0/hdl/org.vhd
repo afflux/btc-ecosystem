@@ -16,17 +16,14 @@ entity org is
     clk: in std_ulogic;
     state_in: in std_ulogic_vector(255 downto 0);
     prefix: in std_ulogic_vector(95 downto 0);
-    nlz: in unsigned(7 downto 0);
+    mask: in std_ulogic_vector(255 downto 0);
     ctrl: in std_ulogic_vector(31 downto 0);
 
     nonce_candidate: out unsigned(31 downto 0);
     nonce_current: out unsigned(31 downto 0);
     status: out std_ulogic_vector(31 downto 0);
     irq: out std_ulogic;
-    dbg1: out std_ulogic_vector(31 downto 0);
-    dbg2: out std_ulogic_vector(31 downto 0);
-    dbg3: out std_ulogic_vector(31 downto 0);
-    dbg4: out std_ulogic_vector(31 downto 0);
+    dbg: out w32_vector(0 to 24);
     step: in std_ulogic
   );
 end entity;
@@ -81,14 +78,21 @@ architecture arc of org is
     end loop;
     return res;
   end function;
+
+  function byte_leading_zeroes_mask(nlzi: integer) return std_ulogic_vector is
+    variable mask: std_ulogic_vector(7 downto 0);
+  begin
+    for j in mask'range loop
+      mask(j) := '1' when 7-j < nlzi else '0';
+    end loop;
+    return mask;
+  end function;
   function mask_candidate(nlz: unsigned(7 downto 0)) return std_ulogic_vector is
-    constant nlzi: integer := to_integer(nlz);
+    variable nlzi: integer := to_integer(nlz);
     variable mask: std_ulogic_vector(255 downto 0);
   begin
     for i in 0 to 31 loop
-      for j in 0 to 7 loop
-        mask(i*8 + j) := '1' when (i*8) + (7-j) < nlzi else '0';
-      end loop;
+      mask(i*8 + 7 downto i*8) := byte_leading_zeroes_mask(nlzi - (i*8));
     end loop;
     return mask;
   end function;
@@ -98,8 +102,7 @@ begin
   sha_1: entity work.hw(arc) port map(clk, rst_1, load_1, H0,   padded_msg_1, result_1, step);
 
   process(clk)
-    function is_candidate(nlz: unsigned(7 downto 0); candidate: block256) return boolean is
-      variable mask: std_ulogic_vector(255 downto 0) := mask_candidate(nlz);
+    function is_candidate(mask: std_ulogic_vector(255 downto 0); candidate: block256) return boolean is
       variable c: std_ulogic_vector(0 to 255) := to_suv256(candidate);
     begin
       return (mask and c) = (0 to 255=>'0');
@@ -124,7 +127,6 @@ begin
         nonce_pipe <= nonce & nonce_pipe(nonce_pipe'low to nonce_pipe'high - 1);
         stage_pipe <= '0' & stage_pipe(stage_pipe'low to stage_pipe'high - 1);
         ctr <= (ctr + 1) mod 16;
-
 
         case status_internal is
           when RDY =>
@@ -160,7 +162,7 @@ begin
             status_internal <= ERR;
         end case;
 
-        if (status_internal = BUSY or status_internal = FIN) and stage_pipe(stage_pipe'high) = '1' and is_candidate(nlz, result_1) then
+        if (status_internal = BUSY or status_internal = FIN) and stage_pipe(stage_pipe'high) = '1' and is_candidate(mask, result_1) then
           nonce_candidate <= nonce_pipe(nonce_pipe'high);
           irq <= '1';
           status_internal <= FOUND;
@@ -187,9 +189,9 @@ begin
   load_0 <= stage_pipe(0);
   load_1 <= stage_pipe(66);
   nonce_current <= nonce;
-  dbg1 <= std_ulogic_vector(result_1(7));
-  dbg2 <= mask_candidate(nlz)(31 downto 0);
-  dbg3 <= std_ulogic_vector(result_1(7)) and mask_candidate(nlz)(31 downto 0);
-  dbg4 <= std_ulogic_vector(clk_counter);
+  dbg(0 to 7) <= result_1;
+  dbg(8 to 15) <= to_block256(mask);
+  dbg(16 to 23) <= to_block256(to_suv256(result_1) and mask);
+  dbg(24) <= (clk_counter);
 
 end architecture;
