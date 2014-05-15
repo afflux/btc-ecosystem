@@ -3,7 +3,7 @@
   <spirit:vendor>makess</spirit:vendor>
   <spirit:library>user</spirit:library>
   <spirit:name>sha256_accel_axi</spirit:name>
-  <spirit:version>1.79</spirit:version>
+  <spirit:version>1.80</spirit:version>
   <spirit:busInterfaces>
     <spirit:busInterface>
       <spirit:name>SHA256_ACCEL_AXI</spirit:name>
@@ -811,7 +811,7 @@
       </xilinx:taxonomies>
       <xilinx:displayName>sha256_accel_axi</xilinx:displayName>
       <xilinx:coreRevision>1</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2014-05-15T20:53:29Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2014-05-15T22:13:02Z</xilinx:coreCreationDateTime>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
       <xilinx:xilinxVersion>2014.1</xilinx:xilinxVersion>

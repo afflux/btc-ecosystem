@@ -46,7 +46,7 @@
 -- 
 -- DO NOT MODIFY THIS FILE.
 
--- IP VLNV: makess:user:sha256_accel_axi:1.79
+-- IP VLNV: makess:user:sha256_accel_axi:1.80
 -- IP Revision: 1
 
 LIBRARY ieee;

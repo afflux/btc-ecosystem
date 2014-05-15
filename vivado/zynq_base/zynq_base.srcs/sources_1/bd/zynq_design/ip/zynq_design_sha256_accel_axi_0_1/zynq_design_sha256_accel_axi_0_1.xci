@@ -7,7 +7,7 @@
   <spirit:componentInstances>
     <spirit:componentInstance>
       <spirit:instanceName>zynq_design_sha256_accel_axi_0_1</spirit:instanceName>
-      <spirit:componentRef spirit:vendor="makess" spirit:library="user" spirit:name="sha256_accel_axi" spirit:version="1.79"/>
+      <spirit:componentRef spirit:vendor="makess" spirit:library="user" spirit:name="sha256_accel_axi" spirit:version="1.80"/>
       <spirit:configurableElementValues>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_SHA256_ACCEL_AXI_BASEADDR">0xFFFFFFFF</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_SHA256_ACCEL_AXI_HIGHADDR">0x00000000</spirit:configurableElementValue>

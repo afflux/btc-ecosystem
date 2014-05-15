@@ -265,7 +265,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>customizationCRC</spirit:name>
-            <spirit:value>07513285</spirit:value>
+            <spirit:value>08d490b0</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>customizationCRCversion</spirit:name>
@@ -273,7 +273,7 @@
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Thu May 15 20:54:38 UTC 2014</spirit:value>
+            <spirit:value>Thu May 15 22:23:06 UTC 2014</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>StaleAtRelink</spirit:name>
@@ -292,7 +292,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>customizationCRC</spirit:name>
-            <spirit:value>07513285</spirit:value>
+            <spirit:value>08d490b0</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>customizationCRCversion</spirit:name>
@@ -300,7 +300,7 @@
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Thu May 15 20:54:38 UTC 2014</spirit:value>
+            <spirit:value>Thu May 15 22:23:06 UTC 2014</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>StaleAtRelink</spirit:name>
@@ -774,27 +774,27 @@
     <spirit:fileSet>
       <spirit:name>xilinx_vhdlsynthesis_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/sha256_accel_axi_v1_0.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_80/87a3d4d8/hdl/sha256_accel_axi_v1_0.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/sha256_lib/sha256_pkg.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_80/87a3d4d8/hdl/sha256_lib/sha256_pkg.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>sha256_lib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/hw.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_80/87a3d4d8/hdl/hw.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/org.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_80/87a3d4d8/hdl/org.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/global_lib/numeric_std.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_80/87a3d4d8/hdl/global_lib/numeric_std.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>global_lib</spirit:logicalName>
       </spirit:file>
@@ -849,7 +849,7 @@
       </xilinx:taxonomies>
       <xilinx:displayName>sha256_accel_axi</xilinx:displayName>
       <xilinx:coreRevision>1</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2014-05-15T20:53:29Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2014-05-15T22:13:02Z</xilinx:coreCreationDateTime>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
       <xilinx:xilinxVersion>2014.1</xilinx:xilinxVersion>
