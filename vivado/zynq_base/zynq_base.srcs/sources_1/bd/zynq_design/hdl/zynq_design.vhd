@@ -1,7 +1,7 @@
 --Copyright 1986-2014 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------
 --Tool Version: Vivado v.2014.1 (lin64) Build 881834 Fri Apr  4 13:56:21 MDT 2014
---Date        : Tue May 13 19:24:34 2014
+--Date        : Thu May 15 22:53:57 2014
 --Host        : martin-laptop running 64-bit Ubuntu 14.04 LTS
 --Command     : generate_target zynq_design.bd
 --Design      : zynq_design
@@ -327,7 +327,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 library UNISIM;
 use UNISIM.VCOMPONENTS.ALL;
-entity zynq_design_processing_system7_0_axi_periph_0 is
+entity zynq_design_processing_system7_0_axi_periph_1 is
   port (
     ACLK : in STD_LOGIC;
     ARESETN : in STD_LOGIC_VECTOR ( 0 to 0 );
@@ -393,9 +393,9 @@ entity zynq_design_processing_system7_0_axi_periph_0 is
     S00_AXI_wstrb : in STD_LOGIC_VECTOR ( 3 downto 0 );
     S00_AXI_wvalid : in STD_LOGIC
   );
-end zynq_design_processing_system7_0_axi_periph_0;
+end zynq_design_processing_system7_0_axi_periph_1;
 
-architecture STRUCTURE of zynq_design_processing_system7_0_axi_periph_0 is
+architecture STRUCTURE of zynq_design_processing_system7_0_axi_periph_1 is
   signal S00_ACLK_1 : STD_LOGIC;
   signal S00_ARESETN_1 : STD_LOGIC_VECTOR ( 0 to 0 );
   signal processing_system7_0_axi_periph_ACLK_net : STD_LOGIC;
@@ -613,7 +613,7 @@ entity zynq_design is
     FIXED_IO_ps_srstb : inout STD_LOGIC
   );
   attribute CORE_GENERATION_INFO : string;
-  attribute CORE_GENERATION_INFO of zynq_design : entity is "zynq_design,IP_Integrator,{x_ipVendor=xilinx.com,x_ipLanguage=VHDL,numBlks=6,numReposBlks=4,numNonXlnxBlks=1,numHierBlks=2,maxHierDepth=0,da_axi4_cnt=14,da_ps7_cnt=1}";
+  attribute CORE_GENERATION_INFO of zynq_design : entity is "zynq_design,IP_Integrator,{x_ipVendor=xilinx.com,x_ipLanguage=VHDL,numBlks=6,numReposBlks=4,numNonXlnxBlks=1,numHierBlks=2,maxHierDepth=0,da_axi4_cnt=15,da_ps7_cnt=1}";
 end zynq_design;
 
 architecture STRUCTURE of zynq_design is
@@ -690,7 +690,7 @@ architecture STRUCTURE of zynq_design is
     PS_PORB : inout STD_LOGIC
   );
   end component zynq_design_processing_system7_0_0;
-  component zynq_design_rst_processing_system7_0_100M_0 is
+  component zynq_design_rst_processing_system7_0_76M_0 is
   port (
     slowest_sync_clk : in STD_LOGIC;
     ext_reset_in : in STD_LOGIC;
@@ -703,8 +703,8 @@ architecture STRUCTURE of zynq_design is
     interconnect_aresetn : out STD_LOGIC_VECTOR ( 0 to 0 );
     peripheral_aresetn : out STD_LOGIC_VECTOR ( 0 to 0 )
   );
-  end component zynq_design_rst_processing_system7_0_100M_0;
-  component zynq_design_sha256_accel_axi_0_0 is
+  end component zynq_design_rst_processing_system7_0_76M_0;
+  component zynq_design_sha256_accel_axi_0_1 is
   port (
     sha256_accel_irq : out STD_LOGIC;
     sha256_accel_axi_awaddr : in STD_LOGIC_VECTOR ( 9 downto 0 );
@@ -729,7 +729,7 @@ architecture STRUCTURE of zynq_design is
     sha256_accel_axi_aclk : in STD_LOGIC;
     sha256_accel_axi_aresetn : in STD_LOGIC
   );
-  end component zynq_design_sha256_accel_axi_0_0;
+  end component zynq_design_sha256_accel_axi_0_1;
   signal GND_1 : STD_LOGIC;
   signal VCC_1 : STD_LOGIC;
   signal processing_system7_0_DDR_ADDR : STD_LOGIC_VECTOR ( 14 downto 0 );
@@ -812,17 +812,17 @@ architecture STRUCTURE of zynq_design is
   signal processing_system7_0_axi_periph_M00_AXI_WREADY : STD_LOGIC;
   signal processing_system7_0_axi_periph_M00_AXI_WSTRB : STD_LOGIC_VECTOR ( 3 downto 0 );
   signal processing_system7_0_axi_periph_M00_AXI_WVALID : STD_LOGIC;
-  signal rst_processing_system7_0_100M_interconnect_aresetn : STD_LOGIC_VECTOR ( 0 to 0 );
-  signal rst_processing_system7_0_100M_peripheral_aresetn : STD_LOGIC_VECTOR ( 0 to 0 );
+  signal rst_processing_system7_0_76M_interconnect_aresetn : STD_LOGIC_VECTOR ( 0 to 0 );
+  signal rst_processing_system7_0_76M_peripheral_aresetn : STD_LOGIC_VECTOR ( 0 to 0 );
   signal sha256_accel_axi_0_sha256_accel_irq : STD_LOGIC;
   signal NLW_processing_system7_0_TTC0_WAVE0_OUT_UNCONNECTED : STD_LOGIC;
   signal NLW_processing_system7_0_TTC0_WAVE1_OUT_UNCONNECTED : STD_LOGIC;
   signal NLW_processing_system7_0_TTC0_WAVE2_OUT_UNCONNECTED : STD_LOGIC;
   signal NLW_processing_system7_0_USB0_VBUS_PWRSELECT_UNCONNECTED : STD_LOGIC;
   signal NLW_processing_system7_0_USB0_PORT_INDCTL_UNCONNECTED : STD_LOGIC_VECTOR ( 1 downto 0 );
-  signal NLW_rst_processing_system7_0_100M_mb_reset_UNCONNECTED : STD_LOGIC;
-  signal NLW_rst_processing_system7_0_100M_bus_struct_reset_UNCONNECTED : STD_LOGIC_VECTOR ( 0 to 0 );
-  signal NLW_rst_processing_system7_0_100M_peripheral_reset_UNCONNECTED : STD_LOGIC_VECTOR ( 0 to 0 );
+  signal NLW_rst_processing_system7_0_76M_mb_reset_UNCONNECTED : STD_LOGIC;
+  signal NLW_rst_processing_system7_0_76M_bus_struct_reset_UNCONNECTED : STD_LOGIC_VECTOR ( 0 to 0 );
+  signal NLW_rst_processing_system7_0_76M_peripheral_reset_UNCONNECTED : STD_LOGIC_VECTOR ( 0 to 0 );
 begin
 GND: unisim.vcomponents.GND
     port map (
@@ -904,12 +904,12 @@ processing_system7_0: component zynq_design_processing_system7_0_0
       USB0_VBUS_PWRFAULT => GND_1,
       USB0_VBUS_PWRSELECT => NLW_processing_system7_0_USB0_VBUS_PWRSELECT_UNCONNECTED
     );
-processing_system7_0_axi_periph: entity work.zynq_design_processing_system7_0_axi_periph_0
+processing_system7_0_axi_periph: entity work.zynq_design_processing_system7_0_axi_periph_1
     port map (
       ACLK => processing_system7_0_FCLK_CLK0,
-      ARESETN(0) => rst_processing_system7_0_100M_interconnect_aresetn(0),
+      ARESETN(0) => rst_processing_system7_0_76M_interconnect_aresetn(0),
       M00_ACLK => processing_system7_0_FCLK_CLK0,
-      M00_ARESETN(0) => rst_processing_system7_0_100M_peripheral_aresetn(0),
+      M00_ARESETN(0) => rst_processing_system7_0_76M_peripheral_aresetn(0),
       M00_AXI_araddr(9 downto 0) => processing_system7_0_axi_periph_M00_AXI_ARADDR(9 downto 0),
       M00_AXI_arprot(2 downto 0) => processing_system7_0_axi_periph_M00_AXI_ARPROT(2 downto 0),
       M00_AXI_arready => processing_system7_0_axi_periph_M00_AXI_ARREADY,
@@ -930,7 +930,7 @@ processing_system7_0_axi_periph: entity work.zynq_design_processing_system7_0_ax
       M00_AXI_wstrb(3 downto 0) => processing_system7_0_axi_periph_M00_AXI_WSTRB(3 downto 0),
       M00_AXI_wvalid => processing_system7_0_axi_periph_M00_AXI_WVALID,
       S00_ACLK => processing_system7_0_FCLK_CLK0,
-      S00_ARESETN(0) => rst_processing_system7_0_100M_peripheral_aresetn(0),
+      S00_ARESETN(0) => rst_processing_system7_0_76M_peripheral_aresetn(0),
       S00_AXI_araddr(31 downto 0) => processing_system7_0_M_AXI_GP0_ARADDR(31 downto 0),
       S00_AXI_arburst(1 downto 0) => processing_system7_0_M_AXI_GP0_ARBURST(1 downto 0),
       S00_AXI_arcache(3 downto 0) => processing_system7_0_M_AXI_GP0_ARCACHE(3 downto 0),
@@ -970,24 +970,24 @@ processing_system7_0_axi_periph: entity work.zynq_design_processing_system7_0_ax
       S00_AXI_wstrb(3 downto 0) => processing_system7_0_M_AXI_GP0_WSTRB(3 downto 0),
       S00_AXI_wvalid => processing_system7_0_M_AXI_GP0_WVALID
     );
-rst_processing_system7_0_100M: component zynq_design_rst_processing_system7_0_100M_0
+rst_processing_system7_0_76M: component zynq_design_rst_processing_system7_0_76M_0
     port map (
       aux_reset_in => VCC_1,
-      bus_struct_reset(0) => NLW_rst_processing_system7_0_100M_bus_struct_reset_UNCONNECTED(0),
+      bus_struct_reset(0) => NLW_rst_processing_system7_0_76M_bus_struct_reset_UNCONNECTED(0),
       dcm_locked => VCC_1,
       ext_reset_in => processing_system7_0_FCLK_RESET0_N,
-      interconnect_aresetn(0) => rst_processing_system7_0_100M_interconnect_aresetn(0),
+      interconnect_aresetn(0) => rst_processing_system7_0_76M_interconnect_aresetn(0),
       mb_debug_sys_rst => GND_1,
-      mb_reset => NLW_rst_processing_system7_0_100M_mb_reset_UNCONNECTED,
-      peripheral_aresetn(0) => rst_processing_system7_0_100M_peripheral_aresetn(0),
-      peripheral_reset(0) => NLW_rst_processing_system7_0_100M_peripheral_reset_UNCONNECTED(0),
+      mb_reset => NLW_rst_processing_system7_0_76M_mb_reset_UNCONNECTED,
+      peripheral_aresetn(0) => rst_processing_system7_0_76M_peripheral_aresetn(0),
+      peripheral_reset(0) => NLW_rst_processing_system7_0_76M_peripheral_reset_UNCONNECTED(0),
       slowest_sync_clk => processing_system7_0_FCLK_CLK0
     );
-sha256_accel_axi_0: component zynq_design_sha256_accel_axi_0_0
+sha256_accel_axi_0: component zynq_design_sha256_accel_axi_0_1
     port map (
       sha256_accel_axi_aclk => processing_system7_0_FCLK_CLK0,
       sha256_accel_axi_araddr(9 downto 0) => processing_system7_0_axi_periph_M00_AXI_ARADDR(9 downto 0),
-      sha256_accel_axi_aresetn => rst_processing_system7_0_100M_peripheral_aresetn(0),
+      sha256_accel_axi_aresetn => rst_processing_system7_0_76M_peripheral_aresetn(0),
       sha256_accel_axi_arprot(2 downto 0) => processing_system7_0_axi_periph_M00_AXI_ARPROT(2 downto 0),
       sha256_accel_axi_arready => processing_system7_0_axi_periph_M00_AXI_ARREADY,
       sha256_accel_axi_arvalid => processing_system7_0_axi_periph_M00_AXI_ARVALID,

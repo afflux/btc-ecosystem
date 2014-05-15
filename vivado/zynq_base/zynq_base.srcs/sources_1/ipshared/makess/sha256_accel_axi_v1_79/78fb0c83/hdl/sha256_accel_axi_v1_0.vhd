@@ -4,6 +4,9 @@ use ieee.std_logic_1164.all;
 library global_lib;
 use global_lib.numeric_std.all;
 
+library sha256_lib;
+use sha256_lib.sha256_pkg.all;
+
 entity sha256_accel_axi_v1_0 is
 	port (
 		sha256_accel_irq : out std_logic;
@@ -59,6 +62,18 @@ entity sha256_accel_axi_v1_0 is
 end entity;
 
 architecture arch_imp of sha256_accel_axi_v1_0 is
+
+	constant REG_STATE_IN: integer := 0;
+	constant REG_PREFIX: integer := 8;
+	constant REG_DIFFICULTY_MASK: integer := 11;
+	constant REG_NONCE_CANDIDATE: integer := 19;
+	constant REG_NONCE_CURRENT: integer := 20;
+	constant REG_STATUS: integer := 21;
+	constant REG_CONTROL: integer := 22;
+	constant REG_IRQ_MASK: integer := 23;
+	constant REG_STEP: integer := 24;
+	constant REG_DEBUG: integer := 25;
+
 	-- AXI4LITE signals
 	signal axi_awaddr : unsigned(9 downto 0);
 	signal axi_awready : std_logic;
@@ -78,26 +93,28 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 	-- sha256 registers
 	signal sha256_accel_state_in : std_logic_vector(255 downto 0);
 	signal sha256_accel_prefix : std_logic_vector(95 downto 0);
-	signal sha256_accel_num_leading_zero : unsigned(7 downto 0);
+	signal sha256_accel_difficulty_mask : std_logic_vector(0 to 255);
 	signal sha256_accel_nonce_candidate : unsigned(31 downto 0);
 	signal sha256_accel_nonce_current : unsigned(31 downto 0);
 
 	signal sha256_accel_status : std_logic_vector(31 downto 0);
 	signal sha256_accel_control : std_logic_vector(31 downto 0);
 	signal sha256_accel_irq_mask : std_logic;
-	
-	signal internal_state_in : std_ulogic_vector(255 downto 0);
-    signal internal_prefix : std_ulogic_vector(95 downto 0);
-    signal internal_num_leading_zero : unsigned(7 downto 0);
-    signal internal_nonce_candidate : unsigned(31 downto 0);
-    signal internal_nonce_current : unsigned(31 downto 0);
 
-    signal internal_status : std_ulogic_vector(31 downto 0);
-    signal internal_control : std_ulogic_vector(31 downto 0);
-    signal internal_clk: std_ulogic;
-	
+	signal internal_state_in : std_ulogic_vector(255 downto 0);
+	signal internal_prefix : std_ulogic_vector(95 downto 0);
+	signal internal_difficulty_mask : std_ulogic_vector(0 to 255);
+	signal internal_nonce_candidate : unsigned(31 downto 0);
+	signal internal_nonce_current : unsigned(31 downto 0);
+
+	signal internal_status : std_ulogic_vector(31 downto 0);
+	signal internal_control : std_ulogic_vector(31 downto 0);
+	signal internal_clk: std_ulogic;
+
 	signal internal_irq: std_ulogic;
 	signal external_irq: std_logic;
+	signal internal_dbg: w32_vector(0 to 32);
+	signal internal_step: std_ulogic;
 begin
 	-- I/O Connections assignments
 	sha256_accel_axi_awready <= axi_awready;
@@ -179,52 +196,67 @@ begin
 	slv_reg_wren <= axi_wready and sha256_accel_axi_wvalid and axi_awready and sha256_accel_axi_awvalid;
 
 	process (sha256_accel_axi_aclk)
-		variable loc_addr : natural;
+		variable loc_addr, reg_addr, data_bit : natural;
 	begin
 		if rising_edge(sha256_accel_axi_aclk) then
+			internal_step <= sha256_accel_control(8);
+
 			sha256_accel_irq_mask <= '0';
 
 			if sha256_accel_axi_aresetn = '0' then
 				sha256_accel_state_in <= (others => '0');
 				sha256_accel_prefix <= (others => '0');
-				sha256_accel_num_leading_zero <= (others => '0');
+				sha256_accel_difficulty_mask <= (others => '0');
 				sha256_accel_control <= (others => '0');
 			else
 				loc_addr := to_integer(axi_awaddr(9 downto 2));
 				if (slv_reg_wren = '1') then
 					case loc_addr is
-					when 0 to 7 =>
+					when REG_STATE_IN to REG_STATE_IN + 7 =>
+						reg_addr := loc_addr - REG_STATE_IN;
 						for byte_index in 0 to 3 loop
 							if (sha256_accel_axi_wstrb(byte_index) = '1') then
-								sha256_accel_state_in(loc_addr * 32 + byte_index * 8 + 7 downto loc_addr * 32 + byte_index * 8) <= sha256_accel_axi_wdata(byte_index * 8 + 7 downto byte_index * 8);
+								data_bit := reg_addr * 32 + byte_index * 8;
+								sha256_accel_state_in(255 - data_bit downto 255 - 7 - data_bit) <= sha256_accel_axi_wdata(byte_index * 8 + 7 downto byte_index * 8);
 							end if;
 						end loop;
-					when 8 to 10 =>
+					when REG_PREFIX to REG_PREFIX + 2 =>
+						reg_addr := loc_addr - REG_PREFIX;
 						for byte_index in 0 to 3 loop
 							if (sha256_accel_axi_wstrb(byte_index) = '1') then
-								sha256_accel_prefix((loc_addr - 8) * 32 + byte_index * 8 + 7 downto (loc_addr - 8) * 32 + byte_index * 8) <= sha256_accel_axi_wdata(byte_index * 8 + 7 downto byte_index * 8);
+								data_bit := reg_addr * 32 + byte_index * 8;
+								sha256_accel_prefix(95 - data_bit downto 95 - 7 - data_bit) <= sha256_accel_axi_wdata(byte_index * 8 + 7 downto byte_index * 8);
 							end if;
 						end loop;
-					when 11 =>
-						if (sha256_accel_axi_wstrb(0) = '1') then
-							sha256_accel_num_leading_zero <= unsigned(sha256_accel_axi_wdata(7 downto 0));
-						end if;
-					when 12 =>
+					when REG_DIFFICULTY_MASK to REG_DIFFICULTY_MASK + 7 =>
+						reg_addr := loc_addr - REG_DIFFICULTY_MASK;
+						for byte_index in 0 to 3 loop
+							if (sha256_accel_axi_wstrb(byte_index) = '1') then
+								sha256_accel_difficulty_mask(reg_addr * 32 + byte_index * 8 to reg_addr * 32 + byte_index * 8 + 7) <= sha256_accel_axi_wdata(byte_index * 8 + 7 downto byte_index * 8);
+							end if;
+						end loop;
+					when REG_NONCE_CANDIDATE =>
 						-- sha256_accel_nonce_candidate is read only
-					when 13 =>
+					when REG_NONCE_CURRENT =>
 						-- sha256_accel_nonce_current is read only
-					when 14 =>
+					when REG_STATUS =>
 						-- sha256_accel_status is read only
-					when 15 =>
+					when REG_CONTROL =>
 						for byte_index in 0 to 3 loop
 							if (sha256_accel_axi_wstrb(byte_index) = '1') then
 								sha256_accel_control(byte_index * 8 + 7 downto byte_index * 8) <= sha256_accel_axi_wdata(byte_index * 8 + 7 downto byte_index * 8);
 							end if;
 						end loop;
-					when 16 =>
+					when REG_IRQ_MASK =>
 						if (sha256_accel_axi_wstrb(0) = '1') then
 							sha256_accel_irq_mask <= sha256_accel_axi_wdata(0);
 						end if;
+					when REG_STEP =>
+						if (sha256_accel_axi_wstrb(0) = '1') then
+							internal_step <= sha256_accel_axi_wdata(0);
+						end if;
+					when REG_DEBUG =>
+						-- debug is read only
 					when others =>
 					end case;
 				end if;
@@ -311,7 +343,7 @@ begin
 	slv_reg_rden <= axi_arready and sha256_accel_axi_arvalid and (not axi_rvalid);
 
 	process
-		variable loc_addr : natural;
+		variable loc_addr, reg_addr, data_bit : natural;
 	begin
 		if sha256_accel_axi_aresetn = '0' then
 			reg_data_out <= (others => '1');
@@ -320,22 +352,35 @@ begin
 			-- Address decoding for reading registers
 			loc_addr := to_integer(axi_araddr(9 downto 2));
 			case loc_addr is
-			when 0 to 7 =>
-				-- sha256_accel_state_in is write only
-			when 8 to 10 =>
-				-- sha256_accel_prefix is write only
-			when 11 =>
-				-- sha256_accel_num_leading_zero is write only
-			when 12 =>
+			when REG_STATE_IN to REG_STATE_IN + 7 =>
+				reg_addr := loc_addr - REG_STATE_IN;
+				for byte_index in 0 to 3 loop
+					data_bit := reg_addr * 32 + byte_index * 8;
+					reg_data_out(byte_index * 8 + 7 downto byte_index * 8) <= sha256_accel_state_in(255 - data_bit downto 255 - 7 - data_bit);
+				end loop;
+			when REG_PREFIX to REG_PREFIX + 2 =>
+				reg_addr := loc_addr - REG_PREFIX;
+				for byte_index in 0 to 3 loop
+					data_bit := reg_addr * 32 + byte_index * 8;
+					reg_data_out(byte_index * 8 + 7 downto byte_index * 8) <= sha256_accel_prefix(95 - data_bit downto 95 - 7 - data_bit);
+				end loop;
+			when REG_DIFFICULTY_MASK to REG_DIFFICULTY_MASK + 7 =>
+				reg_data_out <= sha256_accel_difficulty_mask((loc_addr - REG_DIFFICULTY_MASK) * 32 to (loc_addr - REG_DIFFICULTY_MASK) * 32 + 31);
+			when REG_NONCE_CANDIDATE =>
 				reg_data_out <= std_logic_vector(sha256_accel_nonce_candidate);
-			when 13 =>
+			when REG_NONCE_CURRENT =>
 				reg_data_out <= std_logic_vector(sha256_accel_nonce_current);
-			when 14 =>
+			when REG_STATUS =>
 				reg_data_out <= sha256_accel_status;
-			when 15 =>
-				-- sha256_accel_control is write only
-			when 16 =>
-				-- sha256_accel_irq_mask is write only
+			when REG_CONTROL =>
+				reg_data_out <= sha256_accel_control;
+			when REG_IRQ_MASK =>
+				reg_data_out <= (others=>sha256_accel_irq_mask);
+			when REG_STEP =>
+				reg_data_out <= (others=>internal_step);
+			when REG_DEBUG to REG_DEBUG + 32 =>
+				reg_addr := loc_addr - REG_DEBUG;
+				reg_data_out <= std_logic_vector(internal_dbg(reg_addr));
 			when others =>
 			end case;
 		end if;
@@ -380,18 +425,21 @@ begin
 		internal_clk,
 		internal_state_in,
 		internal_prefix,
-		internal_num_leading_zero,
+		internal_difficulty_mask,
 		internal_control,
 		internal_nonce_candidate,
 		internal_nonce_current,
 		internal_status,
-		internal_irq
+		internal_irq,
+		internal_dbg,
+		internal_step
 	);
 
 	internal_clk <= sha256_accel_axi_aclk;
 	internal_state_in <= to_stdulogicvector(sha256_accel_state_in);
 	internal_prefix <= to_stdulogicvector(sha256_accel_prefix);
-	internal_num_leading_zero <= sha256_accel_num_leading_zero;
+
+	internal_difficulty_mask <= to_stdulogicvector(sha256_accel_difficulty_mask);
 	internal_control <= to_stdulogicvector(sha256_accel_control);
 	sha256_accel_nonce_candidate <= internal_nonce_candidate;
 	sha256_accel_nonce_current <= internal_nonce_current;

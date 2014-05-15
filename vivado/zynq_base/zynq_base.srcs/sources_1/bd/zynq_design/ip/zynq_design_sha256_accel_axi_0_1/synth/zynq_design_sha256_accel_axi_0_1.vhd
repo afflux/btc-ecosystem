@@ -46,7 +46,7 @@
 -- 
 -- DO NOT MODIFY THIS FILE.
 
--- IP VLNV: makess:user:sha256_accel_axi:1.43
+-- IP VLNV: makess:user:sha256_accel_axi:1.79
 -- IP Revision: 1
 
 LIBRARY ieee;
@@ -56,7 +56,7 @@ USE ieee.numeric_std.ALL;
 LIBRARY global_lib;
 USE global_lib.sha256_accel_axi_v1_0;
 
-ENTITY zynq_design_sha256_accel_axi_0_0 IS
+ENTITY zynq_design_sha256_accel_axi_0_1 IS
   PORT (
     sha256_accel_irq : OUT STD_LOGIC;
     sha256_accel_axi_awaddr : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
@@ -81,11 +81,11 @@ ENTITY zynq_design_sha256_accel_axi_0_0 IS
     sha256_accel_axi_aclk : IN STD_LOGIC;
     sha256_accel_axi_aresetn : IN STD_LOGIC
   );
-END zynq_design_sha256_accel_axi_0_0;
+END zynq_design_sha256_accel_axi_0_1;
 
-ARCHITECTURE zynq_design_sha256_accel_axi_0_0_arch OF zynq_design_sha256_accel_axi_0_0 IS
+ARCHITECTURE zynq_design_sha256_accel_axi_0_1_arch OF zynq_design_sha256_accel_axi_0_1 IS
   ATTRIBUTE DowngradeIPIdentifiedWarnings : string;
-  ATTRIBUTE DowngradeIPIdentifiedWarnings OF zynq_design_sha256_accel_axi_0_0_arch: ARCHITECTURE IS "yes";
+  ATTRIBUTE DowngradeIPIdentifiedWarnings OF zynq_design_sha256_accel_axi_0_1_arch: ARCHITECTURE IS "yes";
 
   COMPONENT sha256_accel_axi_v1_0 IS
     PORT (
@@ -114,9 +114,9 @@ ARCHITECTURE zynq_design_sha256_accel_axi_0_0_arch OF zynq_design_sha256_accel_a
     );
   END COMPONENT sha256_accel_axi_v1_0;
   ATTRIBUTE X_CORE_INFO : STRING;
-  ATTRIBUTE X_CORE_INFO OF zynq_design_sha256_accel_axi_0_0_arch: ARCHITECTURE IS "sha256_accel_axi_v1_0,Vivado 2014.1";
+  ATTRIBUTE X_CORE_INFO OF zynq_design_sha256_accel_axi_0_1_arch: ARCHITECTURE IS "sha256_accel_axi_v1_0,Vivado 2014.1";
   ATTRIBUTE CHECK_LICENSE_TYPE : STRING;
-  ATTRIBUTE CHECK_LICENSE_TYPE OF zynq_design_sha256_accel_axi_0_0_arch : ARCHITECTURE IS "zynq_design_sha256_accel_axi_0_0,sha256_accel_axi_v1_0,{}";
+  ATTRIBUTE CHECK_LICENSE_TYPE OF zynq_design_sha256_accel_axi_0_1_arch : ARCHITECTURE IS "zynq_design_sha256_accel_axi_0_1,sha256_accel_axi_v1_0,{}";
   ATTRIBUTE X_INTERFACE_INFO : STRING;
   ATTRIBUTE X_INTERFACE_INFO OF sha256_accel_axi_awaddr: SIGNAL IS "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI AWADDR";
   ATTRIBUTE X_INTERFACE_INFO OF sha256_accel_axi_awprot: SIGNAL IS "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI AWPROT";
@@ -165,4 +165,4 @@ BEGIN
       sha256_accel_axi_aclk => sha256_accel_axi_aclk,
       sha256_accel_axi_aresetn => sha256_accel_axi_aresetn
     );
-END zynq_design_sha256_accel_axi_0_0_arch;
+END zynq_design_sha256_accel_axi_0_1_arch;

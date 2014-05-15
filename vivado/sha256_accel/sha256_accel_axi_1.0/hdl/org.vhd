@@ -14,16 +14,16 @@ use std.textio.all;
 entity org is
   port(
     clk: in std_ulogic;
-    state_in: in std_ulogic_vector(255 downto 0);
-    prefix: in std_ulogic_vector(95 downto 0);
-    mask: in std_ulogic_vector(255 downto 0);
+    state_in: in std_ulogic_vector(0 to 255);
+    prefix: in std_ulogic_vector(0 to 95);
+    mask: in std_ulogic_vector(0 to 255);
     ctrl: in std_ulogic_vector(31 downto 0);
 
     nonce_candidate: out unsigned(31 downto 0);
     nonce_current: out unsigned(31 downto 0);
     status: out std_ulogic_vector(31 downto 0);
     irq: out std_ulogic;
-    dbg: out w32_vector(0 to 24);
+    dbg: out w32_vector(0 to 32);
     step: in std_ulogic
   );
 end entity;
@@ -49,6 +49,8 @@ architecture arc of org is
   signal h_in: block256;
   signal padded_msg_0, padded_msg_1: block512;
   signal result_0, result_1: block256;
+
+  signal dbg_states_0, dbg_states_1: block256;
 
   signal clk_counter: unsigned(31 downto 0);
 
@@ -79,27 +81,27 @@ architecture arc of org is
     return res;
   end function;
 
-  function byte_leading_zeroes_mask(nlzi: integer) return std_ulogic_vector is
-    variable mask: std_ulogic_vector(7 downto 0);
-  begin
-    for j in mask'range loop
-      mask(j) := '1' when 7-j < nlzi else '0';
-    end loop;
-    return mask;
-  end function;
-  function mask_candidate(nlz: unsigned(7 downto 0)) return std_ulogic_vector is
-    variable nlzi: integer := to_integer(nlz);
-    variable mask: std_ulogic_vector(255 downto 0);
-  begin
-    for i in 0 to 31 loop
-      mask(i*8 + 7 downto i*8) := byte_leading_zeroes_mask(nlzi - (i*8));
-    end loop;
-    return mask;
-  end function;
+  -- function byte_leading_zeroes_mask(nlzi: integer) return std_ulogic_vector is
+  --   variable mask: std_ulogic_vector(7 downto 0);
+  -- begin
+  --   for j in mask'range loop
+  --     mask(j) := '1' when 7-j < nlzi else '0';
+  --   end loop;
+  --   return mask;
+  -- end function;
+  -- function mask_candidate(nlz: unsigned(7 downto 0)) return std_ulogic_vector is
+  --   variable nlzi: integer := to_integer(nlz);
+  --   variable mask: std_ulogic_vector(255 downto 0);
+  -- begin
+  --   for i in 0 to 31 loop
+  --     mask(i*8 + 7 downto i*8) := byte_leading_zeroes_mask(nlzi - (i*8));
+  --   end loop;
+  --   return mask;
+  -- end function;
 begin
 
-  sha_0: entity work.hw(arc) port map(clk, rst_0, load_0, h_in, padded_msg_0, result_0, step);
-  sha_1: entity work.hw(arc) port map(clk, rst_1, load_1, H0,   padded_msg_1, result_1, step);
+  sha_0: entity work.hw(arc) port map(clk, rst_0, load_0, h_in, padded_msg_0, result_0, step, dbg_states_0);
+  sha_1: entity work.hw(arc) port map(clk, rst_1, load_1, H0,   padded_msg_1, result_1, step, dbg_states_1);
 
   process(clk)
     function is_candidate(mask: std_ulogic_vector(255 downto 0); candidate: block256) return boolean is
@@ -121,12 +123,12 @@ begin
         clk_counter <= (others => '0');
       elsif step = '1' then
 
-        clk_counter <= clk_counter + 1;
+        clk_counter <= clk_counter + to_unsigned(1, clk_counter'length);
 
         -- the pipelines have to keep mooving, independent from the current state (status_internal)
         nonce_pipe <= nonce & nonce_pipe(nonce_pipe'low to nonce_pipe'high - 1);
         stage_pipe <= '0' & stage_pipe(stage_pipe'low to stage_pipe'high - 1);
-        ctr <= (ctr + 1) mod 16;
+        ctr <= (ctr + to_unsigned(1, ctr'length));
 
         case status_internal is
           when RDY =>
@@ -192,6 +194,7 @@ begin
   dbg(0 to 7) <= result_1;
   dbg(8 to 15) <= to_block256(mask);
   dbg(16 to 23) <= to_block256(to_suv256(result_1) and mask);
-  dbg(24) <= (clk_counter);
+  dbg(24) <= clk_counter;
+  dbg(25 to 32) <= dbg_states_0;
 
 end architecture;

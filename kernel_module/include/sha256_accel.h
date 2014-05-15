@@ -25,7 +25,7 @@
 
 #	define SHA256_ACCEL_STEP _IO(SHA256_ACCEL_MAGIC, 9)
 
-#	define SHA256_ACCEL_NUM_DBG_REGS 50
+#	define SHA256_ACCEL_NUM_REGS 58
 
 struct sha256_accel_msg_s {
 	__u32 status;

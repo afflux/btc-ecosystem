@@ -1,16 +1,16 @@
 Copyright 1986-2014 Xilinx, Inc. All Rights Reserved.
 -----------------------------------------------------------------------------------
 | Tool Version : Vivado v.2014.1 (lin64) Build 881834 Fri Apr  4 13:56:21 MDT 2014
-| Date         : Tue May 13 19:24:24 2014
+| Date         : Thu May 15 22:53:49 2014
 | Host         : martin-laptop running 64-bit Ubuntu 14.04 LTS
 | Command      : upgrade_ip
 | Device       : xc7z020clg484-1
 -----------------------------------------------------------------------------------
 
-Upgrade Log for IP 'zynq_design_sha256_accel_axi_0_0'
+Upgrade Log for IP 'zynq_design_sha256_accel_axi_0_1'
 
 1. Summary
 ----------
 
-SUCCESS in the upgrade of zynq_design_sha256_accel_axi_0_0 from makess:user:sha256_accel_axi:1.42 (Rev. 1) to makess:user:sha256_accel_axi:1.43 (Rev. 1)
+SUCCESS in the upgrade of zynq_design_sha256_accel_axi_0_1 from makess:user:sha256_accel_axi:1.78 (Rev. 1) to makess:user:sha256_accel_axi:1.79 (Rev. 1)
 

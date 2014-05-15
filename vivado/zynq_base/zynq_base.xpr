@@ -30,7 +30,7 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PSRCDIR/sources_1/bd/zynq_design/ip/zynq_design_sha256_accel_axi_0_0/zynq_design_sha256_accel_axi_0_0.upgrade_log"/>
+      <File Path="$PSRCDIR/sources_1/bd/zynq_design/ip/zynq_design_sha256_accel_axi_0_1/zynq_design_sha256_accel_axi_0_1.upgrade_log"/>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
         <Option Name="TopModule" Val="zynq_design_wrapper"/>

@@ -14,7 +14,7 @@
         <UsedIn Val="IMPLEMENTATION"/>
         <UsedIn Val="SIMULATION"/>
       </File>
-      <File Name="ip/zynq_design_sha256_accel_axi_0_0/zynq_design_sha256_accel_axi_0_0.xci" Type="IP">
+      <File Name="ip/zynq_design_sha256_accel_axi_0_1/zynq_design_sha256_accel_axi_0_1.xci" Type="IP">
         <Instance HierarchyPath="sha256_accel_axi_0"/>
         <Properties IsEditable="false" IsVisible="true" Timestamp="0" IsTrackable="true"/>
         <Library Name="xil_defaultlib"/>
@@ -22,7 +22,7 @@
         <UsedIn Val="IMPLEMENTATION"/>
         <UsedIn Val="SIMULATION"/>
       </File>
-      <File Name="ip/zynq_design_processing_system7_0_axi_periph_0/zynq_design_processing_system7_0_axi_periph_0.xci" Type="IP">
+      <File Name="ip/zynq_design_processing_system7_0_axi_periph_1/zynq_design_processing_system7_0_axi_periph_1.xci" Type="IP">
         <Instance HierarchyPath="processing_system7_0_axi_periph"/>
         <Properties IsEditable="false" IsVisible="false" Timestamp="0" IsTrackable="true"/>
         <Library Name="xil_defaultlib"/>
@@ -30,8 +30,8 @@
         <UsedIn Val="IMPLEMENTATION"/>
         <UsedIn Val="SIMULATION"/>
       </File>
-      <File Name="ip/zynq_design_rst_processing_system7_0_100M_0/zynq_design_rst_processing_system7_0_100M_0.xci" Type="IP">
-        <Instance HierarchyPath="rst_processing_system7_0_100M"/>
+      <File Name="ip/zynq_design_rst_processing_system7_0_76M_0/zynq_design_rst_processing_system7_0_76M_0.xci" Type="IP">
+        <Instance HierarchyPath="rst_processing_system7_0_76M"/>
         <Properties IsEditable="false" IsVisible="true" Timestamp="0" IsTrackable="true"/>
         <Library Name="xil_defaultlib"/>
         <UsedIn Val="SYNTHESIS"/>

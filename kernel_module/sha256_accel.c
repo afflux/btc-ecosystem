@@ -27,8 +27,8 @@
 #define REG_STATUS 21
 #define REG_CONTROL 22
 #define REG_IRQ_MASK 23
-#define REG_DEBUG 24
-#define REG_STEP 49
+#define REG_STEP 24
+#define REG_DEBUG 25
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Keßler");
@@ -148,7 +148,7 @@ static unsigned int sha256_accel_poll(struct file *file_ptr, struct poll_table_s
 static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsigned long param) {
 	void *addr;
 	const void *caddr;
-	unsigned char buf[4*SHA256_ACCEL_NUM_DBG_REGS];
+	unsigned char buf[4*SHA256_ACCEL_NUM_REGS];
 	__u32 val;
 
 	if (_IOC_TYPE(command) != SHA256_ACCEL_MAGIC)
@@ -218,11 +218,11 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 	case SHA256_ACCEL_GET_DEBUG:
 		addr = (void __user *) param;
 
-		if (!access_ok(VERIFY_WRITE, addr, 4*SHA256_ACCEL_NUM_DBG_REGS))
+		if (!access_ok(VERIFY_WRITE, addr, 4*SHA256_ACCEL_NUM_REGS))
 			return -EFAULT;
 
-		memcpy_fromio(buf, sha256_accel_mem, 4*SHA256_ACCEL_NUM_DBG_REGS);
-		copy_to_user(addr, buf, 4*SHA256_ACCEL_NUM_DBG_REGS);
+		memcpy_fromio(buf, sha256_accel_mem, 4*SHA256_ACCEL_NUM_REGS);
+		copy_to_user(addr, buf, 4*SHA256_ACCEL_NUM_REGS);
 
 		break;
 
@@ -280,7 +280,6 @@ static irqreturn_t sha256_accel_irq(int irqid, void *dev_id) {
 	mutex_unlock(&sha256_accel_msg_mutex);
 
 	wake_up(&sha256_accel_queue);
-	DBG(KERN_INFO, "cya l8er. %zu\n", sha256_accel_msg_avail());
 
 	return IRQ_HANDLED;
 }

@@ -1,5 +1,5 @@
 
-# file: zynq_design_rst_processing_system7_0_100M_0.xdc
+# file: zynq_design_rst_processing_system7_0_76M_0.xdc
 # (c) Copyright 2009 - 2013 Xilinx, Inc. All rights reserved.
 # 
 # This file contains confidential and proprietary information

@@ -8,11 +8,11 @@ use ieee.std_logic_1164.all;
 library global_lib;
 use global_lib.numeric_std.all;
 
-library STD;
-use STD.textio.all;
+library std;
+use std.textio.all;
 
 entity tborg is
-  end entity tborg;
+end entity;
 
 architecture arc of tborg is
   -- clock counter
@@ -22,7 +22,7 @@ architecture arc of tborg is
   signal clk: std_ulogic := '0';
   signal state_in: std_ulogic_vector(255 downto 0);
   signal prefix: std_ulogic_vector(95 downto 0);
-  signal nlz: unsigned(7 downto 0) := (others=>'0');
+  signal mask: std_ulogic_vector(255 downto 0) := (others=>'0');
   signal ctrl: std_ulogic_vector(31 downto 0) := (others=>'0');
        
   signal nonce_candidate: unsigned(31 downto 0);
@@ -30,9 +30,10 @@ architecture arc of tborg is
   signal status: std_ulogic_vector(31 downto 0);
   signal irq: std_ulogic;
 
+  signal dbg: w32_vector(0 to 32);
 begin
 
-  sha: entity work.org(arc) port map(clk, state_in, prefix, nlz, ctrl, nonce_candidate, nonce_current, status, irq);
+  sha: entity work.org(arc) port map(clk, state_in, prefix, mask, ctrl, nonce_candidate, nonce_current, status, irq, dbg, '1');
 
   CLK_GEN: process
   begin
@@ -51,7 +52,6 @@ begin
   state_in <= X"9524c59305c5671316e669ba2d2810a007e86e372f56a9dacd5bce697a78da2d";
 
   prefix <= X"f1fc122bc7f5d74df2b9441a";
-  nlz <= to_unsigned(11, 8);
 
   SIG_GEN: process(ctr, irq)
     variable l: LINE;
@@ -72,21 +72,19 @@ begin
           ctrl <= (1=>'1', others=>'0');
 
         when 1 =>
-          report "start low" severity note;
-          ctrl <= (others=>'0');
+          --report "start low" severity note;
+          --ctrl <= (others=>'0');
 
         when others =>
       end case;
     end if;
 
     if irq = '1' and irq'event then
-      report "nonce candidate found" severity note;
-
-        write(l, string'("nonce="));
-        hwrite(l, std_ulogic_vector(nonce_candidate));
-        writeline(output, l);
+      report "result " severity note;
+      hwrite(l, dbg);
+      writeline(output, l);
     end if;
 
-  end process SIG_GEN;
+  end process;
 
-end architecture arc;
+end architecture;

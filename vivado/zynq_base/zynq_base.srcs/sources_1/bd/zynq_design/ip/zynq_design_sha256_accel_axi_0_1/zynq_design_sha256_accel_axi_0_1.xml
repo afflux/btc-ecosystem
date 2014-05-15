@@ -2,7 +2,7 @@
 <spirit:component xmlns:xilinx="http://www.xilinx.com" xmlns:spirit="http://www.spiritconsortium.org/XMLSchema/SPIRIT/1685-2009" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <spirit:vendor>makess</spirit:vendor>
   <spirit:library>customized_ip</spirit:library>
-  <spirit:name>zynq_design_sha256_accel_axi_0_0</spirit:name>
+  <spirit:name>zynq_design_sha256_accel_axi_0_1</spirit:name>
   <spirit:version>1.0</spirit:version>
   <spirit:busInterfaces>
     <spirit:busInterface>
@@ -265,7 +265,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>customizationCRC</spirit:name>
-            <spirit:value>a1ca9608</spirit:value>
+            <spirit:value>07513285</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>customizationCRCversion</spirit:name>
@@ -273,7 +273,7 @@
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Tue May 13 17:25:10 UTC 2014</spirit:value>
+            <spirit:value>Thu May 15 20:54:38 UTC 2014</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>StaleAtRelink</spirit:name>
@@ -292,7 +292,7 @@
         <spirit:parameters>
           <spirit:parameter>
             <spirit:name>customizationCRC</spirit:name>
-            <spirit:value>a1ca9608</spirit:value>
+            <spirit:value>07513285</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>customizationCRCversion</spirit:name>
@@ -300,7 +300,7 @@
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>GENtimestamp</spirit:name>
-            <spirit:value>Tue May 13 17:25:10 UTC 2014</spirit:value>
+            <spirit:value>Thu May 15 20:54:38 UTC 2014</spirit:value>
           </spirit:parameter>
           <spirit:parameter>
             <spirit:name>StaleAtRelink</spirit:name>
@@ -774,27 +774,27 @@
     <spirit:fileSet>
       <spirit:name>xilinx_vhdlsynthesis_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_43/50e69637/hdl/sha256_accel_axi_v1_0.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/sha256_accel_axi_v1_0.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_43/50e69637/hdl/sha256_lib/sha256_pkg.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/sha256_lib/sha256_pkg.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>sha256_lib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_43/50e69637/hdl/hw.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/hw.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_43/50e69637/hdl/org.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/org.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
       <spirit:file>
-        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_43/50e69637/hdl/global_lib/numeric_std.vhd</spirit:name>
+        <spirit:name>../../../../ipshared/makess/sha256_accel_axi_v1_79/78fb0c83/hdl/global_lib/numeric_std.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>global_lib</spirit:logicalName>
       </spirit:file>
@@ -802,7 +802,7 @@
     <spirit:fileSet>
       <spirit:name>xilinx_vhdlsynthesiswrapper_view_fileset</spirit:name>
       <spirit:file>
-        <spirit:name>synth/zynq_design_sha256_accel_axi_0_0.vhd</spirit:name>
+        <spirit:name>synth/zynq_design_sha256_accel_axi_0_1.vhd</spirit:name>
         <spirit:fileType>vhdlSource</spirit:fileType>
         <spirit:logicalName>xil_defaultlib</spirit:logicalName>
       </spirit:file>
@@ -836,7 +836,7 @@
     </spirit:parameter>
     <spirit:parameter>
       <spirit:name>Component_Name</spirit:name>
-      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.Component_Name" spirit:order="1">zynq_design_sha256_accel_axi_0_0</spirit:value>
+      <spirit:value spirit:resolve="user" spirit:id="PARAM_VALUE.Component_Name" spirit:order="1">zynq_design_sha256_accel_axi_0_1</spirit:value>
     </spirit:parameter>
   </spirit:parameters>
   <spirit:vendorExtensions>
@@ -847,15 +847,15 @@
       <xilinx:taxonomies>
         <xilinx:taxonomy>AXI_Peripheral</xilinx:taxonomy>
       </xilinx:taxonomies>
-      <xilinx:displayName>sha256_accel_axi_v1.43</xilinx:displayName>
+      <xilinx:displayName>sha256_accel_axi</xilinx:displayName>
       <xilinx:coreRevision>1</xilinx:coreRevision>
-      <xilinx:coreCreationDateTime>2014-05-13T17:24:00Z</xilinx:coreCreationDateTime>
+      <xilinx:coreCreationDateTime>2014-05-15T20:53:29Z</xilinx:coreCreationDateTime>
     </xilinx:coreExtensions>
     <xilinx:packagingInfo>
       <xilinx:xilinxVersion>2014.1</xilinx:xilinxVersion>
       <xilinx:checksum xilinx:scope="busInterfaces" xilinx:value="a18cea73"/>
       <xilinx:checksum xilinx:scope="memoryMaps" xilinx:value="d5faebd9"/>
-      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="87dc227d"/>
+      <xilinx:checksum xilinx:scope="fileGroups" xilinx:value="654e5eef"/>
       <xilinx:checksum xilinx:scope="ports" xilinx:value="28d58aca"/>
       <xilinx:checksum xilinx:scope="parameters" xilinx:value="e0ed7390"/>
     </xilinx:packagingInfo>
