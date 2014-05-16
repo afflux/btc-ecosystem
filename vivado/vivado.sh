@@ -8,6 +8,6 @@ source /opt/Xilinx/Vivado/2014.1/settings64.sh
 tmpdir=$(mktemp -d)
 cd $tmpdir
 
-vivado
+vivado $@
 
 rm -rf $tmpdir
