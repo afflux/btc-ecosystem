@@ -1,17 +1,26 @@
+SRC = $(wildcard src/*.vhd)
+BIT = system.bit
+
 SHELL = /bin/bash
 TOP = $(shell pwd)
 
-all: system.bit
+.PHONY: all clean
+
+all: $(BIT)
+
 clean:
 	rm -rf out
 
-system.bit: out out/system.bit
+scp: $(BIT)
+	scp $^ linaro:/mnt/
+
+$(BIT): out out/system.bit
 	cp -a out/system.bit $@
 
 out:
 	mkdir $@
 
-out/system.bit:
+out/system.bit: $(SRC)
 	export LC_NUMERIC="en_US.UTF-8" ; \
 	export LC_CTYPE="en_US.UTF-8" ; \
 	export LANG="en_US.UTF-8" ; \

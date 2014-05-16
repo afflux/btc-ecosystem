@@ -247,6 +247,9 @@ static int sha256_accel_open(struct inode *inode, struct file *file_ptr) {
 }
 
 static int sha256_accel_release(struct inode *inode, struct file *file_ptr) {
+	/* stop any running computation */
+	iowrite8(0x1, &sha256_accel_mem[REG_CONTROL]);
+
 	/* give back the lock */
 	mutex_unlock(&sha256_accel_device_mutex);
 	return 0;

@@ -16,9 +16,7 @@ entity hw is
     hin: in block256;
     padded_msg: in block512;
     state: out block256;
-    step: in std_ulogic;
-
-    dbg_state_0: out block256
+    step: in std_ulogic
   );
 end entity;
 
@@ -186,7 +184,5 @@ begin
   end generate;
 
   state <= states(states'high);
-
-  dbg_state_0 <= states(0);
 
 end architecture;
