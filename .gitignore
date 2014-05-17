@@ -7,3 +7,4 @@ modules.order
 *.ko
 .*.swp
 userspace_app/sha256
+sha256/sha256

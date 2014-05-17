@@ -1,71 +1,98 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <endian.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 
 #include <sha256_accel.h>
-
-#define BOLD_RED "\e[1;31m"
-#define BOLD_GREEN "\e[1;32m"
-#define BOLD_YELLOW "\e[1;33m"
-#define BOLD_BLUE "\e[1;34m"
-#define END "\e[0m"
+#include <sha256.h>
 
 struct btc_s {
-	__u32 Version;
-	__u8 hashPrevBlock[32];
-	__u8 hashMerkleRoot[32];
-	__u32 Time;
-	__u32 Bits;
-	__u32 Nonce;
+	uint32_t Version;
+	uint8_t hashPrevBlock[32];
+	uint8_t hashMerkleRoot[32];
+	uint32_t Time;
+	uint32_t Bits;
+	uint32_t Nonce;
 }__attribute__((packed));
 
-static void generate_mask(int number_leading_zeroes, unsigned char mask[32]) {
+static void generate_test_mask(int number_leading_zeroes, unsigned char mask[32]) {
 	int i, nlz = number_leading_zeroes;
 	unsigned char b;
+	memset(mask, 0, 32);
 	for (i = 31; i >= 0; --i) {
 		for (b = 0x80; b > 0 && nlz > 0; b >>= 1, --nlz)
 			mask[i] |= b;
 	}
 }
 
+static void print_hex(const void *data, size_t n) {
+	size_t i;
+	for (i = 0; i < n; ++i)
+		printf("%02x", ((const char *) data)[i]);
+	printf("\n");
+}
+
 int main(int argc, char *argv[]) {
 	fd_set set;
+	sha256_context ctx;
 	struct timeval timeout;
-	int ret, fd = open(SHA256_ACCEL_DEVICE, O_RDWR), i;
+	int ret, fd;
 	struct sha256_accel_msg_s msg;
-	__u32 nonce_current, status = 0u;
-	unsigned char mask[32] = {0};
+	uint32_t nonce_current, status = 0u;
+	unsigned char mask[32], state[32];
 
-	if (argc != 2) {
-		fprintf(stderr, BOLD_RED "usage: runtest <nlz>" END "\n");
-		return 1;
+#if 0
+	if (argc != 1) {
+		fprintf(stderr, "\"%s\" does not take arguments\n", argv[0]);
+		return -1;
 	}
+#else
+	if (argc != 2) {
+		fprintf(stderr, "usage: runtest <nlz>\n");
+		return -1;
+	}
+#endif
 
-	generate_mask(atoi(argv[1]), mask);
-
-	for (i = 0; i < 32; ++i)
-		printf("%02x", mask[i]);
-	printf("\n");
-
+	fd = open(SHA256_ACCEL_DEVICE, O_RDONLY);
 	if (fd == -1) {
-		perror(BOLD_RED "failed to open sha256 accelerator device " SHA256_ACCEL_DEVICE END);
+		perror("failed to open sha256 accelerator device " SHA256_ACCEL_DEVICE);
 		exit(EXIT_FAILURE);
 	}
 
-	printf(BOLD_GREEN "[+] resetting" END "\n");
+	printf("[+] resetting\n");
 	ioctl(fd, SHA256_ACCEL_RESET);
 
-	printf(BOLD_GREEN "[+] waiting for reset" END "\n");
+	printf("[+] waiting for reset\n");
 	do {
 		ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
 		if (ret)
-			perror(BOLD_RED "ioctl GET_STATUS" END);
+			perror("ioctl GET_STATUS");
 	} while (status != 0x1);
 
-	printf(BOLD_GREEN "[+] setting parameters" END "\n");
+	struct btc_s sample = {
+		.Version = htole32(1),
+		.hashPrevBlock = "\x81\xcd\x02\xab\x7e\x56\x9e\x8b\xcd\x93\x17\xe2\xfe\x99\xf2\xde\x44\xd4\x9a\xb2\xb8\x85\x1b\xa4\xa3\x08\x00\x00\x00\x00\x00\x00",
+		.hashMerkleRoot = "\xe3\x20\xb6\xc2\xff\xfc\x8d\x75\x04\x23\xdb\x8b\x1e\xb9\x42\xae\x71\x0e\x95\x1e\xd7\x97\xf7\xaf\xfc\x88\x92\xb0\xf1\xfc\x12\x2b",
+		.Time = htole32(0x4dd7f5c7),
+		.Bits = htole32(0x1a44b9f2),
+		.Nonce = 0
+	};
+	print_hex(&sample, sizeof(sample));
+
+	sha256_init(&ctx);
+	sha256_update(&ctx, (uint8_t *) &sample, sizeof(sample));
+	sha256_nofinish(&ctx, (uint8_t *) state);
+	print_hex(&state, 32);
+
+	generate_test_mask(atoi(argv[1]), mask);
+	print_hex(mask, 32);
+
+	printf("[+] setting parameters\n");
 
 	/********************************************************************************************************************************************************************************************
 	 *                         reg_addr   ---0---0---0---0   ---1---1---1---1   ---2---2---2---2   ---3---3---3---3   ---4---4---4---4   ---5---5---5---5   ---6---6---6---6   ---7---7---7---7 *
@@ -79,41 +106,51 @@ int main(int argc, char *argv[]) {
 	 *                                                                                                                                                                                          *
 	 *            sha256_accel_state_in   255-------------------------------------------------------------------------------------------------------------------------------------------------0 *
 	 */
-	ioctl(fd, SHA256_ACCEL_SET_STATE_IN, "\x95\x24\xc5\x93" "\x05\xc5\x67\x13" "\x16\xe6\x69\xba" "\x2d\x28\x10\xa0" "\x07\xe8\x6e\x37" "\x2f\x56\xa9\xda" "\xcd\x5b\xce\x69" "\x7a\x78\xda\x2d");
-	ioctl(fd, SHA256_ACCEL_SET_PREFIX,   "\xf1\xfc\x12\x2b" "\xc7\xf5\xd7\x4d" "\xf2\xb9\x44\x1a");
+	ioctl(fd, SHA256_ACCEL_SET_STATE_IN, state);
+	ioctl(fd, SHA256_ACCEL_SET_PREFIX, &((uint8_t *) &sample)[64]);
 	ioctl(fd, SHA256_ACCEL_SET_DIFFICULTY_MASK, mask);
 
-	printf(BOLD_GREEN "[+] start" END "\n");
+	printf("[+] start\n");
 	ioctl(fd, SHA256_ACCEL_START);
 
 	while(1) {
 		FD_ZERO(&set);
 		FD_SET(fd, &set);
 		timeout.tv_sec = 0;
-		timeout.tv_usec = 50000;
+		timeout.tv_usec = 100000;
 
 		ret = select(fd + 1, &set, NULL, NULL, &timeout);
 
 		if (ret == 0) {
 			ret = ioctl(fd, SHA256_ACCEL_GET_NONCE_CURRENT, &nonce_current);
 			if (ret)
-				perror(BOLD_RED "ioctl GET_NONCE_CURRENT" END);
+				perror("ioctl GET_NONCE_CURRENT");
 
 			ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
 			if (ret)
-				perror(BOLD_RED "ioctl GET_STATUS" END);
+				perror("ioctl GET_STATUS");
 
-			printf(BOLD_BLUE "[.] status: %08x, nonce current: %08x" END "\n", status, nonce_current);
-			if (status != 0x2)
-				break;
+			printf("[.] status: %08x, nonce current: %08x\n", status, nonce_current);
 		} else if (ret == -1) {
-			perror(BOLD_RED "select" END);
+			perror("select");
 		} else {
 			ret = read(fd, (char *) &msg, sizeof(msg));
-			if (ret == sizeof(msg))
-				printf(BOLD_BLUE "[.] status: %08x, nonce candidate: %08x" END "\n", msg.status, msg.nonce_candidate);
-			else
-				fprintf(stderr, BOLD_RED "[-] short read" END "\n");
+			if (ret == sizeof(msg)) {
+				printf("[.] status: %08x, nonce candidate: %08x\n", msg.status, msg.nonce_candidate);
+
+				sample.Nonce = htobe32(msg.nonce_candidate);
+				print_hex(&sample, sizeof(sample));
+				sha256_init(&ctx);
+				sha256_update(&ctx, (uint8_t *) &sample, sizeof(sample));
+				sha256_finish(&ctx, (uint8_t *) state);
+
+				sha256_init(&ctx);
+				sha256_update(&ctx, state, sizeof(state));
+				sha256_finish(&ctx, state);
+				print_hex(&state, 32);
+			} else {
+				fprintf(stderr, "[-] short read\n");
+			}
 			break;
 		}
 	}

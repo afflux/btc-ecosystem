@@ -1,8 +1,9 @@
-OBJS = main.o
+OBJS = main.o sha256.o
 EXEC = sha256
 CFLAGS = -O2 -Wall -g
-LFLAGS =
-INCLUDES = ../kernel_module/include/
+LFLAGS = -s
+INCLUDE_SHA256 = ../sha256
+INCLUDE_KERNEL = ../kernel_module/include
 ARM_CC = 
 INTEL_CC = gcc
 
@@ -19,8 +20,11 @@ all-intel: $(EXEC)
 clean:
 	rm -rf $(EXEC) $(OBJS)
 
-%.o: %.c $(INCLUDES)/sha256_accel.h
-	$(CC) -o $@ -c $(CFLAGS) -I $(INCLUDES) $<
+sha256.o: $(INCLUDE_SHA256)/sha256.c $(INCLUDE_SHA256)/sha256.h
+	$(CC) -o $@ -c $(CFLAGS) -I $(INCLUDE_SHA256) $<
+
+%.o: %.c $(INCLUDE_SHA256)/sha256.h $(INCLUDE_KERNEL)/sha256_accel.h
+	$(CC) -o $@ -c $(CFLAGS) -I $(INCLUDE_KERNEL) -I $(INCLUDE_SHA256) $<
 
 $(EXEC): $(OBJS)
 	$(CC) -o $@ $^ $(LFLAGS)

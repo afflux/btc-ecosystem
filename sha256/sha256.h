@@ -1,7 +1,7 @@
 #ifndef _SHA256_H
-#define _SHA256_H
+#	define _SHA256_H
 
-#include <stdint.h>
+#	include <stdint.h>
 
 typedef struct {
 	uint64_t total;
