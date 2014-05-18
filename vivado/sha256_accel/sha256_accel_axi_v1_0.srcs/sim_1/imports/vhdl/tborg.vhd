@@ -22,7 +22,7 @@ architecture arc of tborg is
   signal clk: std_ulogic := '0';
   signal state_in: std_ulogic_vector(255 downto 0);
   signal prefix: std_ulogic_vector(95 downto 0);
-  signal mask: std_ulogic_vector(255 downto 0) := (others=>'0');
+  signal mask: std_ulogic_vector(255 downto 0) := (7 downto 4 => '1', others=>'0');
   signal ctrl: std_ulogic_vector(31 downto 0) := (others=>'0');
        
   signal nonce_candidate: unsigned(31 downto 0);
@@ -30,7 +30,7 @@ architecture arc of tborg is
   signal status: std_ulogic_vector(31 downto 0);
   signal irq: std_ulogic;
 
-  signal dbg: w32_vector(0 to 32);
+  signal dbg: w32_vector(0 to 24);
 begin
 
   sha: entity work.org(arc) port map(clk, state_in, prefix, mask, ctrl, nonce_candidate, nonce_current, status, irq, dbg, '1');

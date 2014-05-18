@@ -139,9 +139,7 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 	signal external_irq: std_logic;
 	signal internal_dbg: w32_vector(0 to 24);
 
-	-- pragma translate_off
-	signal internal_step: std_ulogic;
-	-- pragma translate_on
+--	signal internal_step: std_ulogic;
 	constant internal_step: std_ulogic := '1';
 begin
 	-- I/O Connections assignments
@@ -227,9 +225,7 @@ begin
 		variable loc_addr, reg_addr, data_bit : natural;
 	begin
 		if rising_edge(sha256_accel_axi_aclk) then
-			-- pragma translate_off
-			internal_step <= sha256_accel_control(8);
-			-- pragma translate_on
+--			internal_step <= sha256_accel_control(8);
 
 			sha256_accel_irq_mask <= '0';
 
@@ -282,11 +278,9 @@ begin
 							sha256_accel_irq_mask <= sha256_accel_axi_wdata(0);
 						end if;
 					when REG_STEP =>
-						-- pragma translate_off
-						if (sha256_accel_axi_wstrb(0) = '1') then
-							internal_step <= sha256_accel_axi_wdata(0);
-						end if;
-						-- pragma translate_on
+--						if (sha256_accel_axi_wstrb(0) = '1') then
+--							internal_step <= sha256_accel_axi_wdata(0);
+--						end if;
 					when REG_DEBUG =>
 						-- debug is read only
 					when others =>

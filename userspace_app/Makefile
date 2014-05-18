@@ -4,17 +4,17 @@ CFLAGS = -O2 -Wall -g
 LFLAGS = -s
 INCLUDE_SHA256 = ../sha256
 INCLUDE_KERNEL = ../kernel_module/include
-ARM_CC = 
+ARM_CC = arm-linux-gnueabihf-gcc
 INTEL_CC = gcc
 
 .PHONY: all all-arm all-intel scp
 
 all: all-arm
 
-all-arm: CC = arm-linux-gnueabihf-gcc
+all-arm: CC = $(ARM_CC)
 all-arm: $(EXEC)
 
-all-intel: CC = gcc
+all-intel: CC = $(INTEL_CC)
 all-intel: $(EXEC)
 
 clean:

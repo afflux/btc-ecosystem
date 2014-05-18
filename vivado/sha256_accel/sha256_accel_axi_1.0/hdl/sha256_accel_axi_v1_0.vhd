@@ -62,6 +62,32 @@ entity sha256_accel_axi_v1_0 is
 end entity;
 
 architecture arch_imp of sha256_accel_axi_v1_0 is
+	attribute X_CORE_INFO : string;
+	attribute X_CORE_INFO of arch_imp: architecture is "sha256_accel_axi_v1_0,Vivado 2014.1";
+	attribute CHECK_LICENSE_TYPE : string;
+	attribute CHECK_LICENSE_TYPE of arch_imp : architecture is "zynq_design_sha256_accel_axi_0_0,sha256_accel_axi_v1_0,{}";
+	attribute X_INTERFACE_INFO : string;
+	attribute X_INTERFACE_INFO of sha256_accel_axi_awaddr: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI AWADDR";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_awprot: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI AWPROT";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_awvalid: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI AWVALID";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_awready: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI AWREADY";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_wdata: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI WDATA";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_wstrb: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI WSTRB";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_wvalid: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI WVALID";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_wready: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI WREADY";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_bresp: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI BRESP";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_bvalid: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI BVALID";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_bready: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI BREADY";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_araddr: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI ARADDR";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_arprot: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI ARPROT";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_arvalid: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI ARVALID";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_arready: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI ARREADY";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_rdata: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI RDATA";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_rresp: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI RRESP";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_rvalid: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI RVALID";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_rready: signal is "xilinx.com:interface:aximm:1.0 SHA256_ACCEL_AXI RREADY";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_aclk: signal is "xilinx.com:signal:clock:1.0 SHA256_ACCEL_AXI_CLK CLK";
+	attribute X_INTERFACE_INFO of sha256_accel_axi_aresetn: signal is "xilinx.com:signal:reset:1.0 SHA256_ACCEL_AXI_RST RST";
 
 	constant REG_STATE_IN: integer := 0;
 	constant REG_PREFIX: integer := 8;
@@ -75,46 +101,46 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 	constant REG_DEBUG: integer := 25;
 
 	-- AXI4LITE signals
-	signal axi_awaddr : unsigned(9 downto 0);
-	signal axi_awready : std_logic;
-	signal axi_wready : std_logic;
-	signal axi_bresp : std_logic_vector(1 downto 0);
-	signal axi_bvalid : std_logic;
-	signal axi_araddr : unsigned(9 downto 0);
-	signal axi_arready : std_logic;
-	signal axi_rdata : std_logic_vector(31 downto 0);
-	signal axi_rresp : std_logic_vector(1 downto 0);
-	signal axi_rvalid : std_logic;
+	signal axi_awaddr: unsigned(9 downto 0);
+	signal axi_awready: std_logic;
+	signal axi_wready: std_logic;
+	signal axi_bresp: std_logic_vector(1 downto 0);
+	signal axi_bvalid: std_logic;
+	signal axi_araddr: unsigned(9 downto 0);
+	signal axi_arready: std_logic;
+	signal axi_rdata: std_logic_vector(31 downto 0);
+	signal axi_rresp: std_logic_vector(1 downto 0);
+	signal axi_rvalid: std_logic;
 
-	signal slv_reg_rden : std_logic;
-	signal slv_reg_wren : std_logic;
-	signal reg_data_out : std_logic_vector(31 downto 0);
+	signal slv_reg_rden: std_logic;
+	signal slv_reg_wren: std_logic;
+	signal reg_data_out: std_logic_vector(31 downto 0);
 
 	-- sha256 registers
-	signal sha256_accel_state_in : std_logic_vector(255 downto 0);
-	signal sha256_accel_prefix : std_logic_vector(95 downto 0);
-	signal sha256_accel_difficulty_mask : std_logic_vector(0 to 255);
-	signal sha256_accel_nonce_candidate : unsigned(31 downto 0);
-	signal sha256_accel_nonce_current : unsigned(31 downto 0);
+	signal sha256_accel_state_in: std_logic_vector(255 downto 0);
+	signal sha256_accel_prefix: std_logic_vector(95 downto 0);
+	signal sha256_accel_difficulty_mask: std_logic_vector(0 to 255);
+	signal sha256_accel_nonce_candidate: unsigned(31 downto 0);
+	signal sha256_accel_nonce_current: unsigned(31 downto 0);
+	signal sha256_accel_status: std_logic_vector(31 downto 0);
+	signal sha256_accel_control: std_logic_vector(31 downto 0);
+	signal sha256_accel_irq_mask: std_logic;
 
-	signal sha256_accel_status : std_logic_vector(31 downto 0);
-	signal sha256_accel_control : std_logic_vector(31 downto 0);
-	signal sha256_accel_irq_mask : std_logic;
-
-	signal internal_state_in : std_ulogic_vector(255 downto 0);
-	signal internal_prefix : std_ulogic_vector(95 downto 0);
-	signal internal_difficulty_mask : std_ulogic_vector(0 to 255);
-	signal internal_nonce_candidate : unsigned(31 downto 0);
-	signal internal_nonce_current : unsigned(31 downto 0);
-
-	signal internal_status : std_ulogic_vector(31 downto 0);
-	signal internal_control : std_ulogic_vector(31 downto 0);
 	signal internal_clk: std_ulogic;
+	signal internal_state_in: std_ulogic_vector(255 downto 0);
+	signal internal_prefix: std_ulogic_vector(95 downto 0);
+	signal internal_difficulty_mask: std_ulogic_vector(0 to 255);
+	signal internal_nonce_candidate: unsigned(31 downto 0);
+	signal internal_nonce_current: unsigned(31 downto 0);
+	signal internal_status: std_ulogic_vector(31 downto 0);
+	signal internal_control: std_ulogic_vector(31 downto 0);
 
 	signal internal_irq: std_ulogic;
 	signal external_irq: std_logic;
-	signal internal_dbg: w32_vector(0 to 32);
-	signal internal_step: std_ulogic;
+	signal internal_dbg: w32_vector(0 to 24);
+
+--	signal internal_step: std_ulogic;
+	constant internal_step: std_ulogic := '1';
 begin
 	-- I/O Connections assignments
 	sha256_accel_axi_awready <= axi_awready;
@@ -199,7 +225,7 @@ begin
 		variable loc_addr, reg_addr, data_bit : natural;
 	begin
 		if rising_edge(sha256_accel_axi_aclk) then
-			internal_step <= sha256_accel_control(8);
+--			internal_step <= sha256_accel_control(8);
 
 			sha256_accel_irq_mask <= '0';
 
@@ -252,9 +278,9 @@ begin
 							sha256_accel_irq_mask <= sha256_accel_axi_wdata(0);
 						end if;
 					when REG_STEP =>
-						if (sha256_accel_axi_wstrb(0) = '1') then
-							internal_step <= sha256_accel_axi_wdata(0);
-						end if;
+--						if (sha256_accel_axi_wstrb(0) = '1') then
+--							internal_step <= sha256_accel_axi_wdata(0);
+--						end if;
 					when REG_DEBUG =>
 						-- debug is read only
 					when others =>
@@ -378,7 +404,7 @@ begin
 				reg_data_out <= (others=>sha256_accel_irq_mask);
 			when REG_STEP =>
 				reg_data_out <= (others=>internal_step);
-			when REG_DEBUG to REG_DEBUG + 32 =>
+			when REG_DEBUG to REG_DEBUG + 24 =>
 				reg_addr := loc_addr - REG_DEBUG;
 				reg_data_out <= std_logic_vector(internal_dbg(reg_addr));
 			when others =>
@@ -395,10 +421,8 @@ begin
 			else
 				if (slv_reg_rden = '1') then
 					-- When there is a valid read address (sha256_accel_axi_arvalid) with
-					-- acceptance of read address by the slave (axi_arready),
-					-- output the read dada
-					-- Read address mux
-					axi_rdata <= reg_data_out; -- register read data
+					-- acceptance of read address by the slave (axi_arready), output the read data
+					axi_rdata <= reg_data_out;
 				end if;
 			end if;
 		end if;
@@ -419,6 +443,14 @@ begin
 		end if;
 	end process;
 
+	internal_clk <= sha256_accel_axi_aclk;
+	internal_state_in <= to_stdulogicvector(sha256_accel_state_in);
+	internal_prefix <= to_stdulogicvector(sha256_accel_prefix);
+	internal_difficulty_mask <= to_stdulogicvector(sha256_accel_difficulty_mask);
+	internal_control <= to_stdulogicvector(sha256_accel_control);
+	sha256_accel_nonce_candidate <= internal_nonce_candidate;
+	sha256_accel_nonce_current <= internal_nonce_current;
+	sha256_accel_status <= to_stdlogicvector(internal_status);
 	sha256_accel_irq <= external_irq;
 
 	inst: entity work.org(arc) port map(
@@ -434,15 +466,5 @@ begin
 		internal_dbg,
 		internal_step
 	);
-
-	internal_clk <= sha256_accel_axi_aclk;
-	internal_state_in <= to_stdulogicvector(sha256_accel_state_in);
-	internal_prefix <= to_stdulogicvector(sha256_accel_prefix);
-
-	internal_difficulty_mask <= to_stdulogicvector(sha256_accel_difficulty_mask);
-	internal_control <= to_stdulogicvector(sha256_accel_control);
-	sha256_accel_nonce_candidate <= internal_nonce_candidate;
-	sha256_accel_nonce_current <= internal_nonce_current;
-	sha256_accel_status <= to_stdlogicvector(internal_status);
 
 end architecture;
