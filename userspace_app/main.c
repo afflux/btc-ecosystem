@@ -64,6 +64,11 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
+	ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
+	if (ret)
+		perror("ioctl GET_STATUS");
+	printf("[.] status: %08x\n", status);
+
 	printf("[+] resetting\n");
 	ioctl(fd, SHA256_ACCEL_RESET);
 
@@ -85,14 +90,12 @@ int main(int argc, char *argv[]) {
 	print_hex(&sample, sizeof(sample));
 
 	sha256_init(&ctx);
-	sha256_update(&ctx, (uint8_t *) &sample, sizeof(sample));
+	sha256_update(&ctx, (uint8_t *) &sample, sizeof(sample) - sizeof(sample.Nonce));
 	sha256_nofinish(&ctx, (uint8_t *) state);
 	print_hex(&state, 32);
 
 	generate_test_mask(atoi(argv[1]), mask);
 	print_hex(mask, 32);
-
-	printf("[+] setting parameters\n");
 
 	/********************************************************************************************************************************************************************************************
 	 *                         reg_addr   ---0---0---0---0   ---1---1---1---1   ---2---2---2---2   ---3---3---3---3   ---4---4---4---4   ---5---5---5---5   ---6---6---6---6   ---7---7---7---7 *
@@ -105,7 +108,9 @@ int main(int argc, char *argv[]) {
 	 *                           . from   -248-240-232-224                                                                                                                                      *
 	 *                                                                                                                                                                                          *
 	 *            sha256_accel_state_in   255-------------------------------------------------------------------------------------------------------------------------------------------------0 *
-	 */
+	 ********************************************************************************************************************************************************************************************/
+
+	printf("[+] setting parameters\n");
 	ioctl(fd, SHA256_ACCEL_SET_STATE_IN, state);
 	ioctl(fd, SHA256_ACCEL_SET_PREFIX, &((uint8_t *) &sample)[64]);
 	ioctl(fd, SHA256_ACCEL_SET_DIFFICULTY_MASK, mask);
@@ -140,8 +145,7 @@ int main(int argc, char *argv[]) {
 
 				sample.Nonce = htobe32(msg.nonce_candidate);
 				print_hex(&sample, sizeof(sample));
-				sha256_init(&ctx);
-				sha256_update(&ctx, (uint8_t *) &sample, sizeof(sample));
+				sha256_update(&ctx, (uint8_t *) &sample.Nonce, sizeof(sample.Nonce));
 				sha256_finish(&ctx, (uint8_t *) state);
 
 				sha256_init(&ctx);

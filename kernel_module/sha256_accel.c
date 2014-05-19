@@ -268,15 +268,13 @@ static const struct file_operations sha256_accel_fops = {
 static irqreturn_t sha256_accel_irq(int irqid, void *dev_id) {
 	struct sha256_accel_msg_list_s *msg;
 
-	DBG(KERN_INFO, "I just got interrupted. %zu\n", sha256_accel_msg_avail());
-
 	msg = (struct sha256_accel_msg_list_s *) kmalloc(sizeof(*msg), GFP_KERNEL);
 	msg->payload.status = ioread32(&sha256_accel_mem[REG_STATUS]);
 	msg->payload.nonce_candidate = ioread32(&sha256_accel_mem[REG_NONCE_CANDIDATE]);
 
 	iowrite32(0x1, &sha256_accel_mem[REG_IRQ_MASK]);
 
-	DBG(KERN_INFO, "status=%08x nc=%08x\n", msg->payload.status, msg->payload.nonce_candidate);
+	DBG(KERN_INFO, "received interrupt: status=%08x nc=%08x\n", msg->payload.status, msg->payload.nonce_candidate);
 
 	mutex_lock(&sha256_accel_msg_mutex);
 	list_add_tail(&msg->list, &sha256_accel_msg_list);

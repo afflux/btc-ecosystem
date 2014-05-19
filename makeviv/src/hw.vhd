@@ -1,12 +1,12 @@
 -- vim:et:ts=2:sw=2:sts=2:fileencoding=utf-8
-library sha256_lib;
-use sha256_lib.sha256_pkg.all;
-
 library ieee;
 use ieee.std_logic_1164.all;
 
 library global_lib;
 use global_lib.numeric_std.all;
+
+library sha256_lib;
+use sha256_lib.sha256_pkg.all;
 
 entity hw is
   port(
@@ -24,7 +24,7 @@ architecture arc of hw is
   signal w: block2048;
   signal stage_enable: std_ulogic_vector(0 to 64); -- yes this is 65
 
-  type state_pipe is array(integer range <>) of block256;
+  type state_pipe is array(natural range <>) of block256;
   -- states is the unrolled intermediate a_h states
   signal states: state_pipe(0 to 4);
   -- hin_pipe carries the input state to the last cycle for the final combination
@@ -38,11 +38,8 @@ begin
   begin
     if rising_edge(clk) then
       if rst = '1' then
-        w <= (others=>(others=>'0'));
         stage_enable <= (others=>'0');
       elsif step = '1' then
-        w <= w;
-
         if load = '1' then
           -- parallel load of the first 16 message blocks
           w(padded_msg'range) <= padded_msg;
@@ -64,6 +61,7 @@ begin
           w_in := (others=>'0');
           k_in := (others=>'0');
           case stage_enable(i*16 to i*16+15) is
+            when "0000000000000000" =>
             when "1000000000000000" =>
               if i = 0 then
                 state_in := hin_pipe(0);
@@ -135,7 +133,6 @@ begin
               state_in := states(i);
               w_in := w(i*16 + 15);
               k_in := k(i*16 + 15);
-            when "0000000000000000" =>
             when others =>
               -- pragma synthesis_off
               report "invalid stage enable vector" severity error;

@@ -1,12 +1,12 @@
 -- vim:et:ts=2:sw=2:sts=2:fileencoding=utf-8
-library sha256_lib;
-use sha256_lib.sha256_pkg.all;
-
 library ieee;
 use ieee.std_logic_1164.all;
 
 library global_lib;
 use global_lib.numeric_std.all;
+
+library sha256_lib;
+use sha256_lib.sha256_pkg.all;
 
 library std;
 use std.textio.all;
@@ -25,8 +25,8 @@ architecture arc of tborg is
   signal mask: std_ulogic_vector(255 downto 0) := (7 downto 4 => '1', others=>'0');
   signal ctrl: std_ulogic_vector(31 downto 0) := (others=>'0');
        
-  signal nonce_candidate: unsigned(31 downto 0);
-  signal nonce_current: unsigned(31 downto 0);
+  signal nonce_candidate: w32;
+  signal nonce_current: w32;
   signal status: std_ulogic_vector(31 downto 0);
   signal irq: std_ulogic;
 

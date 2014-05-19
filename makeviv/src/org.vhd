@@ -8,21 +8,20 @@ use global_lib.numeric_std.all;
 library sha256_lib;
 use sha256_lib.sha256_pkg.all;
 
-library std;
-use std.textio.all;
-
 entity org is
   port(
     clk: in std_ulogic;
+
     state_in: in std_ulogic_vector(0 to 255);
     prefix: in std_ulogic_vector(0 to 95);
     mask: in std_ulogic_vector(0 to 255);
     ctrl: in std_ulogic_vector(31 downto 0);
 
-    nonce_candidate: out unsigned(31 downto 0);
-    nonce_current: out unsigned(31 downto 0);
+    nonce_candidate: out w32;
+    nonce_current: out w32;
     status: out std_ulogic_vector(31 downto 0);
     irq: out std_ulogic;
+
     dbg: out w32_vector(0 to 24);
     step: in std_ulogic
   );
@@ -31,18 +30,17 @@ end entity;
 architecture arc of org is
   constant RST_IDX: natural := 0;
   constant RUN_IDX: natural := 1;
-  constant NONCE_MAX: unsigned(31 downto 0) := (others=>'1');
+  constant NONCE_MAX: w32 := (others=>'1');
   constant PADDING_0: std_ulogic_vector(0 to 383) := (0=>'1', 374=>'1', 376=>'1', others=>'0');
   constant PADDING_1: std_ulogic_vector(0 to 255) := (0=>'1', 247=>'1', others=>'0');
 
-  type nonce_pipe_t is array(integer range <>) of unsigned(31 downto 0);
   signal stage_pipe: std_ulogic_vector(0 to 132);
-  signal nonce_pipe: nonce_pipe_t(0 to 132);
+  signal nonce_pipe: w32_vector(0 to 132);
 
   type state_t is (RDY, BUSY, FIN, IDLE, FOUND, ERR);
   signal status_internal: state_t;
-  signal nonce: unsigned(31 downto 0);
-  signal ctr: unsigned(3 downto 0);
+  signal nonce: w32;
+  signal ctr: unsigned(7 downto 0);
 
   signal rst_0, rst_1: std_ulogic;
   signal load_0, load_1: std_ulogic;
@@ -50,7 +48,7 @@ architecture arc of org is
   signal padded_msg_0, padded_msg_1: block512;
   signal result_0, result_1, result_candidate: block256;
 
-  signal clk_counter: unsigned(31 downto 0);
+  signal clk_counter: w32;
 
   function to_block512(d : std_ulogic_vector(0 to 511)) return block512 is
     variable res : block512;
@@ -81,7 +79,7 @@ architecture arc of org is
 begin
 
   process(clk)
-    function is_candidate(mask: std_ulogic_vector(255 downto 0); candidate: block256) return boolean is
+    function is_candidate(mask: std_ulogic_vector(0 to 255); candidate: block256) return boolean is
       variable c: std_ulogic_vector(0 to 255) := to_suv256(candidate);
     begin
       return (mask and c) = (0 to 255=>'0');
@@ -92,11 +90,7 @@ begin
       irq <= '0';
       if ctrl(RST_IDX) = '1' then
         stage_pipe <= (others=>'0');
-        nonce_pipe <= (others=>(others=>'0'));
-        nonce <= (others=>'0');
-        ctr <= (others=>'0');
         status_internal <= RDY;
-
         clk_counter <= (others => '0');
       elsif step = '1' then
         clk_counter <= clk_counter + 1;
@@ -104,22 +98,24 @@ begin
         -- the pipelines have to keep mooving, independent from the current state (status_internal)
         nonce_pipe <= nonce & nonce_pipe(nonce_pipe'low to nonce_pipe'high - 1);
         stage_pipe <= '0' & stage_pipe(stage_pipe'low to stage_pipe'high - 1);
-        ctr <= (ctr + to_unsigned(1, ctr'length));
+        ctr <= ctr + 1;
 
         case status_internal is
           when RDY =>
             if ctrl(RUN_IDX) = '1' then
               status_internal <= BUSY;
               ctr <= (others=>'0');
+              nonce <= (others=>'0');
             end if;
 
           when BUSY =>
-            -- if the counter is a multiple of 16 (ctr mod 16 = 0)
-            if ctr = 0 then
+            -- if the counter is a multiple of 16
+            if ctr mod 16 = 0 then
               -- we can feed in the next value
               stage_pipe(0) <= '1';
               -- and calculate the next nonce
               nonce <= nonce + 1;
+              ctr <= 0;
             end if;
 
             if nonce = NONCE_MAX then
@@ -131,10 +127,8 @@ begin
             status_internal <= IDLE;
 
           when IDLE =>
-            null;
 
           when FOUND =>
-            null;
 
           when others =>
             status_internal <= ERR;

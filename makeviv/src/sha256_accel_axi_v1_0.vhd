@@ -119,9 +119,9 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 	-- sha256 registers
 	signal sha256_accel_state_in: std_logic_vector(255 downto 0);
 	signal sha256_accel_prefix: std_logic_vector(95 downto 0);
-	signal sha256_accel_difficulty_mask: std_logic_vector(0 to 255);
-	signal sha256_accel_nonce_candidate: unsigned(31 downto 0);
-	signal sha256_accel_nonce_current: unsigned(31 downto 0);
+	signal sha256_accel_difficulty_mask: std_logic_vector(255 downto 0);
+	signal sha256_accel_nonce_candidate: w32;
+	signal sha256_accel_nonce_current: w32;
 	signal sha256_accel_status: std_logic_vector(31 downto 0);
 	signal sha256_accel_control: std_logic_vector(31 downto 0);
 	signal sha256_accel_irq_mask: std_logic;
@@ -129,9 +129,9 @@ architecture arch_imp of sha256_accel_axi_v1_0 is
 	signal internal_clk: std_ulogic;
 	signal internal_state_in: std_ulogic_vector(255 downto 0);
 	signal internal_prefix: std_ulogic_vector(95 downto 0);
-	signal internal_difficulty_mask: std_ulogic_vector(0 to 255);
-	signal internal_nonce_candidate: unsigned(31 downto 0);
-	signal internal_nonce_current: unsigned(31 downto 0);
+	signal internal_difficulty_mask: std_ulogic_vector(255 downto 0);
+	signal internal_nonce_candidate: w32;
+	signal internal_nonce_current: w32;
 	signal internal_status: std_ulogic_vector(31 downto 0);
 	signal internal_control: std_ulogic_vector(31 downto 0);
 
@@ -258,7 +258,8 @@ begin
 						reg_addr := loc_addr - REG_DIFFICULTY_MASK;
 						for byte_index in 0 to 3 loop
 							if (sha256_accel_axi_wstrb(byte_index) = '1') then
-								sha256_accel_difficulty_mask(reg_addr * 32 + byte_index * 8 to reg_addr * 32 + byte_index * 8 + 7) <= sha256_accel_axi_wdata(byte_index * 8 + 7 downto byte_index * 8);
+								data_bit := reg_addr * 32 + byte_index * 8;
+								sha256_accel_difficulty_mask(255 - data_bit downto 255 - 7 - data_bit) <= sha256_accel_axi_wdata(byte_index * 8 + 7 downto byte_index * 8);
 							end if;
 						end loop;
 					when REG_NONCE_CANDIDATE =>
@@ -391,7 +392,11 @@ begin
 					reg_data_out(byte_index * 8 + 7 downto byte_index * 8) <= sha256_accel_prefix(95 - data_bit downto 95 - 7 - data_bit);
 				end loop;
 			when REG_DIFFICULTY_MASK to REG_DIFFICULTY_MASK + 7 =>
-				reg_data_out <= sha256_accel_difficulty_mask((loc_addr - REG_DIFFICULTY_MASK) * 32 to (loc_addr - REG_DIFFICULTY_MASK) * 32 + 31);
+				reg_addr := loc_addr - REG_DIFFICULTY_MASK;
+				for byte_index in 0 to 3 loop
+					data_bit := reg_addr * 32 + byte_index * 8;
+					reg_data_out(byte_index * 8 + 7 downto byte_index * 8) <= sha256_accel_difficulty_mask(255 - data_bit downto 255 - 7 - data_bit);
+				end loop;
 			when REG_NONCE_CANDIDATE =>
 				reg_data_out <= std_logic_vector(sha256_accel_nonce_candidate);
 			when REG_NONCE_CURRENT =>
