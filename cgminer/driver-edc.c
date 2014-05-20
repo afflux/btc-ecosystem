@@ -50,6 +50,17 @@ cleanup:
 int64_t edc_scanhash(struct thr_info* thr, struct work* work,
     int64_t max_nonce) {
   
+  /*
+   *  TODO
+   *  start work
+   *  wait for result
+   *  abort wait if thr->work_restart == TRUE
+   *  when nonce candidate was found: submit_nonce(thr, work, nonce)
+   */
+  /*
+   * TODO return -1 on failure, otherwise total number of hashes computed
+   *  (even in case of error)
+   */
 }
 
 
