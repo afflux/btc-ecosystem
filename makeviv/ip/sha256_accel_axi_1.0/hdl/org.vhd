@@ -91,7 +91,7 @@ begin
       if ctrl(RST_IDX) = '1' then
         stage_pipe <= (others=>'0');
         status_internal <= RDY;
-        clk_counter <= (others => '0');
+        clk_counter <= to_unsigned(0, clk_counter'length);
       elsif step = '1' then
         clk_counter <= clk_counter + 1;
 
@@ -104,8 +104,8 @@ begin
           when RDY =>
             if ctrl(RUN_IDX) = '1' then
               status_internal <= BUSY;
-              ctr <= (others=>'0');
-              nonce <= (others=>'0');
+              ctr <= to_unsigned(0, ctr'length);
+              nonce <= to_unsigned(0, nonce'length);
             end if;
 
           when BUSY =>
@@ -115,7 +115,7 @@ begin
               stage_pipe(0) <= '1';
               -- and calculate the next nonce
               nonce <= nonce + 1;
-              ctr <= (others=>'0');
+              ctr <= to_unsigned(1, ctr'length);
             end if;
 
             if nonce = NONCE_MAX then
@@ -123,8 +123,10 @@ begin
             end if;
 
           when FIN =>
-            -- FIXME: we have to wait until the pipeline is completely done
-            status_internal <= IDLE;
+            if ctr = stage_pipe'high then
+              status_internal <= IDLE;
+              irq <= '1';
+            end if;
 
           when IDLE =>
 

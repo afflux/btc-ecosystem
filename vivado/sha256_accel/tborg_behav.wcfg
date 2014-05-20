@@ -11,7 +11,7 @@
          </top_modules>
       </db_ref>
    </db_ref_list>
-   <WVObjectSize size="14" />
+   <WVObjectSize size="15" />
    <wvobject db_ref_id="1" type="other" fp_name="/tborg/ctr">
       <obj_property name="ElementShortName">ctr</obj_property>
       <obj_property name="ObjectShortName">ctr</obj_property>
@@ -572,5 +572,9 @@
          <obj_property name="ObjectShortName">hin_pipe[4][0:7][31:0]</obj_property>
          <obj_property name="Radix">HEXRADIX</obj_property>
       </wvobject>
+   </wvobject>
+   <wvobject db_ref_id="1" type="array" fp_name="/tborg/sha/sha_0/stage_enable">
+      <obj_property name="ElementShortName">stage_enable[0:64]</obj_property>
+      <obj_property name="ObjectShortName">stage_enable[0:64]</obj_property>
    </wvobject>
 </wave_config>

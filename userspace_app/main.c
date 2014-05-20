@@ -20,14 +20,13 @@ struct btc_s {
 	uint32_t Nonce;
 }__attribute__((packed));
 
-static void generate_test_mask(int number_leading_zeroes, unsigned char mask[32]) {
-	int i, nlz = number_leading_zeroes;
+static void generate_test_mask(int nlz, unsigned char mask[32]) {
+	int i;
 	unsigned char b;
 	memset(mask, 0, 32);
-	for (i = 31; i >= 0; --i) {
+	for (i = 31; i >= 0; --i)
 		for (b = 0x80; b > 0 && nlz > 0; b >>= 1, --nlz)
 			mask[i] |= b;
-	}
 }
 
 static void print_hex(const void *data, size_t n) {
