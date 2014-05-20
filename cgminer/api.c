@@ -34,7 +34,7 @@
 #define HAVE_AN_ASIC 1
 #endif
 
-#if defined(USE_BITFORCE) || defined(USE_ICARUS) || defined(USE_MODMINER)
+#if defined(USE_BITFORCE) || defined(USE_ICARUS) || defined(USE_MODMINER) || defined(USE_EDC)
 #define HAVE_AN_FPGA 1
 #endif
 
@@ -195,6 +195,9 @@ static const char *DEVICECODE = ""
 #endif
 #ifdef USE_COINTERRA
 			"CTA "
+#endif
+#ifdef USE_EDC
+			"EDC "
 #endif
 #ifdef USE_SPONDOOLIES
 			"SPN "

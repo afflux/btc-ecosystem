@@ -310,6 +310,17 @@ if test "x$spondoolies" = xyes; then
 fi
 AM_CONDITIONAL([HAS_SPONDOOLIES], [test x$spondoolies = xyes])
 
+edc="no"
+
+AC_ARG_ENABLE([edc],
+	[AC_HELP_STRING([--enable-edc],[Compile support for EDC Hardware (default disabled)])],
+	[edc=$enableval]
+	)
+if test "x$edc" = xyes; then
+	AC_DEFINE([USE_EDC], [1], [Defined to 1 if EDC Hardware support is wanted])
+fi
+AM_CONDITIONAL([HAS_EDC], [test x$edc = xyes])
+
 
 curses="auto"
 
@@ -617,7 +628,13 @@ else
 	echo "  ModMiner.FPGAs.......: Disabled"
 fi
 
-if test "x$avalon$avalon2$bab$bflsc$bitforce$bitfury$hashfast$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$spondoolies" = xnonononononononononononononononono; then
+if test "x$edc" = xyes; then
+	echo "  EDC.FPGAs............: Enabled"
+else
+	echo "  EDC.FPGAs............: Disabled"
+fi
+
+if test "x$avalon$avalon2$bab$bflsc$bitforce$bitfury$hashfast$icarus$klondike$knc$modminer$drillbit$minion$cointerra$bitmine_A1$ants1$spondoolies$edc" = xnononononononononononononononononono; then
 	AC_MSG_ERROR([No mining configured in])
 fi
 

@@ -133,3 +133,8 @@ cgminer_SOURCES += driver-modminer.c
 bitstreamsdir = $(bindir)/bitstreams
 dist_bitstreams_DATA = $(top_srcdir)/bitstreams/README
 endif
+
+if HAS_EDC
+cgminer_SOURCES += driver-edc.c
+cgminer_CPPFLAGS += -I$(top_srcdir)/../kernel_module/include
+endif
