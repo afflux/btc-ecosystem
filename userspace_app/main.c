@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	ret = ioctl(fd, SHA256_ACCEL_SET_CLOCK_SPEED, 74);
+	ret = ioctl(fd, SHA256_ACCEL_SET_CLOCK_SPEED, 100);
 	if (ret)
 		perror("ioctl SHA256_ACCEL_SET_CLOCK_SPEED");
 

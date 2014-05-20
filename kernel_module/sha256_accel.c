@@ -16,15 +16,21 @@
 #define DBG(type, message, ...) printk(type CLASS_NAME ": " message, ##__VA_ARGS__)
 
 /* System Level Control Registers */
-#define SLCR_ADDR_BASE (0xf8000000 + SLCR_ADDR_OFFSET)
-#define SLCR_ADDR_OFFSET 0x170
-#define SLCR_ADDR_LEN 0x3f
+#define SLCR_ADDR_BASE 0xf8000000
+#define SLCR_ADDR_LEN 0x0c00
 
-#define REG_FPGA0_CLK_CTRL (0x170 - SLCR_ADDR_OFFSET)
+#define REG_SCL 0x0000
+#define REG_SLCR_LOCK 0x0004
+#define REG_SLCR_UNLOCK 0x0008
+#define REG_SLCR_LOCKSTA 0x000c
+#define REG_FPGA0_CLK_CTRL 0x0170
 
+#define SLCR_UNLOCK_KEY 0xdf0d
+#define SLCR_LOCK_KEY 0x767b
+
+/* sha256 Accelerator Control Registers */
 #define SHA256_ACCEL_ADDR_BASE 0x43c00000
-#define SHA256_ACCEL_ADDR_LEN 68
-#define SHA256_ACCEL_IRQ 61
+#define SHA256_ACCEL_ADDR_LEN (SHA256_ACCEL_NUM_REGS * sizeof(__u32))
 
 #define REG_STATE_IN 0
 #define REG_PREFIX 8
@@ -37,8 +43,11 @@
 #define REG_STEP 24
 #define REG_DEBUG 25
 
+#define SHA256_ACCEL_IRQ 61
+
+
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Martin Keßler");
+MODULE_AUTHOR("Kjell Braden <afflux@pentabarf.de>, Martin Keßler <martin@moegger.de>");
 MODULE_DESCRIPTION("make the sha256 accelerator usable in user space programs");
 MODULE_SUPPORTED_DEVICE(DEVICE_NAME);
 
@@ -156,7 +165,7 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 	void *addr;
 	const void *caddr;
 	unsigned char buf[4*SHA256_ACCEL_NUM_REGS];
-	__u32 val;
+	__u32 val, lock;
 
 	if (_IOC_TYPE(command) != SHA256_ACCEL_MAGIC)
 		return -ENOTTY;
@@ -239,10 +248,25 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 		break;
 
 	case SHA256_ACCEL_SET_CLOCK_SPEED:
-		/* first, calculate the value of the DIVISOR0 and check that it is within the right bounds */
+		/* check secure configuration lock */
+		lock = ioread32(&slcr_mem[REG_SCL]);
+		if (lock != 0)
+			return -EPERM;
+
+		/* check write-protect */
+		lock = ioread32(&slcr_mem[REG_SLCR_LOCKSTA]);
+		if (lock != 0) {
+			/* disable write-protect */
+			iowrite32(SLCR_UNLOCK_KEY, &slcr_mem[REG_SLCR_UNLOCK]);
+			/* check if it was successful */
+			if (ioread32(&slcr_mem[REG_SLCR_LOCKSTA]) != 0)
+				return -EIO;
+		}
+
+		/* first, calculate the value of the DIVISOR0 and check that it is within the correct bounds */
 		val = 1000 / ((const __u32) param);
 		if (val == 0 || val > 0x3f)
-			return -1;
+			return -EINVAL;
 
 		/* then assemble the complete content of the FPGA0_CLK_CTRL */
 		val = (0 << 4) // SRCSEL @[5:4], 0 = IO PLL
@@ -252,6 +276,11 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 		DBG(KERN_INFO, "setting REG_FPGA0_CLK_CTRL to %08x\n", val);
 
 		iowrite32(val, &slcr_mem[REG_FPGA0_CLK_CTRL]);
+
+		if (lock != 0) {
+			/* re-enable write-protect */
+			iowrite32(SLCR_LOCK_KEY, &slcr_mem[REG_SLCR_LOCK]);
+		}
 		break;
 
 	default:

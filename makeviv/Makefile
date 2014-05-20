@@ -18,13 +18,17 @@ scp: $(OUTDIR)/$(BIT)
 $(OUTDIR):
 	mkdir $@
 
-$(OUTDIR)/$(BIT): $(OUTDIR) $(SRC)
+$(BAKDIR):
+	mkdir $@
+
+$(OUTDIR)/$(BIT): $(OUTDIR) $(BAKDIR) $(SRC)
 	export LC_NUMERIC="en_US.UTF-8" ; \
 	export LC_CTYPE="en_US.UTF-8" ; \
 	export LANG="en_US.UTF-8" ; \
 	source $(VIVADO)/settings64.sh ; \
 	tmpdir=$$(mktemp -d) ; \
-	cd $$tmpdir ; \
+	pushd $$tmpdir ; \
 	vivado -mode tcl -source $(TOP)/impl.tcl ; \
+	popd ; \
 	rm -rf $$tmpdir ; \
-	cp $(TOP)/$@ $(TOP)/$(BAKDIR)/$(shell date "+%s")_$(BIT)
+	cp $@ $(BAKDIR)/$(shell date "+%s")_$(BIT)

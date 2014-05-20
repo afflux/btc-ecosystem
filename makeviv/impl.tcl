@@ -30,7 +30,6 @@ set_property default_lib xil_defaultlib [current_project]
 
 add_files [ glob -directory $ipsrc -type f */*.xci ]
 
-set_property is_enabled false [ get_files */ps7_init.* ]
 #set_property generate_synth_checkpoint false [ get_files -filter {FILE_TYPE == IP} ]
 
 add_files -fileset sources_1 -scan_for_includes $topsrc
@@ -42,7 +41,10 @@ set_property top ${design_name} [current_fileset]
 
 set_param synth.vivado.isSynthRun true
 
-generate_target {Synthesis} [get_files -filter {FILE_TYPE == IP && NAME !~ "*_axi_periph_*"} ]
+generate_target -force {Synthesis} [get_files -filter {FILE_TYPE == IP && NAME !~ "*_axi_periph_*"} ]
+
+
+set_property is_enabled false [ get_files */ps7_init.* ]
 
 synth_design -part xc7z020clg484-1
 write_checkpoint -force $output/post-synth_${design_name}.dcp
