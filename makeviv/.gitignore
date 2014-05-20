@@ -1,5 +1,2 @@
 out/
 bak/
-system.bit
-ip/*/*
-!ip/*/*.xci

@@ -4,10 +4,8 @@
 
 set top [file dirname [file normalize [info script]]]
 set output "${top}/out"
-set topsrc "${top}/src"
-set libsrc "${top}/lib"
 set ipsrc "${top}/ip"
-set design_name "zynq_design_wrapper"
+set design_name "zynq_design"
 
 file mkdir $output
 
@@ -26,27 +24,39 @@ create_project -in_memory -part xc7z020clg484-1
 set_property target_language VHDL [current_project]
 set_property board_part em.avnet.com:zed:part0:1.0 [current_project]
 set_param project.compositeFile.enableAutoGeneration 0
+set_property ip_repo_paths $ipsrc [current_fileset]
+update_ip_catalog
+
 set_property default_lib xil_defaultlib [current_project]
 
-add_files [ glob -directory $ipsrc -type f */*.xci ]
+create_bd_design ${design_name}
+startgroup
+create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.4 processing_system7_0
+endgroup
 
-#set_property generate_synth_checkpoint false [ get_files -filter {FILE_TYPE == IP} ]
+connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/M_AXI_GP0_ACLK]
+apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" apply_board_preset "1" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
 
-add_files -fileset sources_1 -scan_for_includes $topsrc
+startgroup
+create_bd_cell -type ip -vlnv makess:user:sha256_accel_axi:1.0 sha256_accel_axi_0
+endgroup
+apply_bd_automation -rule xilinx.com:bd_rule:axi4 -config {Master "/processing_system7_0/M_AXI_GP0" Clk "Auto" }  [get_bd_intf_pins sha256_accel_axi_0/SHA256_ACCEL_AXI]
 
+startgroup
+set_property -dict [list CONFIG.PCW_USE_FABRIC_INTERRUPT {1} CONFIG.PCW_IRQ_F2P_INTR {1}] [get_bd_cells processing_system7_0]
+set_property -dict [list CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {74}] [get_bd_cells processing_system7_0]
+endgroup
+connect_bd_net [get_bd_pins sha256_accel_axi_0/sha256_accel_irq] [get_bd_pins processing_system7_0/IRQ_F2P]
 
-read_vhdl -library sha256_lib [ glob -directory $libsrc/sha256_lib -type f *.vhd ]
-read_vhdl -library global_lib [ glob -directory $libsrc/global_lib -type f *.vhd ]
-set_property top ${design_name} [current_fileset]
+set_property offset 0x43c00000 [get_bd_addr_segs {processing_system7_0/Data/SEG_sha256_accel_axi_0_SHA256_ACCEL_AXI_reg}]
 
 set_param synth.vivado.isSynthRun true
+make_wrapper -files [get_files ${design_name}.bd] -top -import
+generate_target -force {Synthesis Implementation} [get_files ${design_name}.bd]
 
-generate_target -force {Synthesis} [get_files -filter {FILE_TYPE == IP && NAME !~ "*_axi_periph_*"} ]
+set_property top ${design_name}_wrapper [current_fileset]
 
-
-set_property is_enabled false [ get_files */ps7_init.* ]
-
-synth_design -part xc7z020clg484-1
+synth_design
 write_checkpoint -force $output/post-synth_${design_name}.dcp
 report_utilization -file $output/post-synth_${design_name}.utilization
 opt_design
