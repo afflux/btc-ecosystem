@@ -19,11 +19,11 @@
 #define SLCR_ADDR_BASE 0xf8000000
 #define SLCR_ADDR_LEN 0x0c00
 
-#define REG_SCL 0x0000
-#define REG_SLCR_LOCK 0x0004
-#define REG_SLCR_UNLOCK 0x0008
-#define REG_SLCR_LOCKSTA 0x000c
-#define REG_FPGA0_CLK_CTRL 0x0170
+#define REG_SCL (0x0000 / sizeof(__u32))
+#define REG_SLCR_LOCK (0x0004 / sizeof(__u32))
+#define REG_SLCR_UNLOCK (0x0008 / sizeof(__u32))
+#define REG_SLCR_LOCKSTA (0x000c / sizeof(__u32))
+#define REG_FPGA0_CLK_CTRL (0x0170 / sizeof(__u32))
 
 #define SLCR_UNLOCK_KEY 0xdf0d
 #define SLCR_LOCK_KEY 0x767b

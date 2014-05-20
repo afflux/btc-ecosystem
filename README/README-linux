@@ -43,5 +43,5 @@ $> gzip zImage
 
 pack the compressed kernel in a U-Boot readable form
 (if the ubuntu package was installed omit the path in front of the "mkimage")
-$> ../u-boot-xlnx/mkimage -A arm -a 0x8000 -e 0x8000 -n 'Linux kernel' -T kernel -d zImage.gz uImage
+$> ../u-boot-xlnx/tools/mkimage -A arm -a 0x8000 -e 0x8000 -n 'Linux kernel' -T kernel -d zImage.gz uImage
 

@@ -115,7 +115,7 @@ begin
               stage_pipe(0) <= '1';
               -- and calculate the next nonce
               nonce <= nonce + 1;
-              ctr <= 0;
+              ctr <= (others=>'0');
             end if;
 
             if nonce = NONCE_MAX then

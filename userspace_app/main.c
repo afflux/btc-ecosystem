@@ -46,17 +46,10 @@ int main(int argc, char *argv[]) {
 	uint32_t nonce_current, status = 0u;
 	unsigned char mask[32], state[32];
 
-#if 0
-	if (argc != 1) {
-		fprintf(stderr, "\"%s\" does not take arguments\n", argv[0]);
-		return -1;
-	}
-#else
 	if (argc != 2) {
 		fprintf(stderr, "usage: runtest <nlz>\n");
 		return -1;
 	}
-#endif
 
 	fd = open(SHA256_ACCEL_DEVICE, O_RDONLY);
 	if (fd == -1) {
@@ -64,7 +57,7 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	ret = ioctl(fd, SHA256_ACCEL_SET_CLOCK_SPEED, 100);
+	ret = ioctl(fd, SHA256_ACCEL_SET_CLOCK_SPEED, 71);
 	if (ret)
 		perror("ioctl SHA256_ACCEL_SET_CLOCK_SPEED");
 
