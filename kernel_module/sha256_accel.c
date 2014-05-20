@@ -30,6 +30,15 @@
 #define REG_STEP 24
 #define REG_DEBUG 25
 
+#define UNLOCK_KEY	0xdf0d
+#define LOCK_KEY	0x767b
+#define SLCR_BASE	0xf8000000
+#define SCL		(SLCR_BASE | 0x0000)
+#define SLCR_LOCK	(SLCR_BASE | 0x0004)
+#define SLCR_UNLOCK	(SLCR_BASE | 0x0008)
+#define SLCR_LOCKSTA	(SLCR_BASE | 0x000c)
+#define FPGA0_CLK_CTRL	(SLCR_BASE | 0x0170)
+
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Martin Keßler");
 MODULE_DESCRIPTION("make the sha256 accelerator usable in user space programs");
@@ -230,6 +239,30 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 		iowrite32(0x1, &sha256_accel_mem[REG_STEP]);
 
 		break;
+
+	case SHA256_ACCEL_SET_CLK_CTRL:
+		/* check secure configuration lock */
+		val = ioread32(SCL);
+		if (val != 0)
+			return -EPERM;
+		
+		/* check write-protect */
+		val = ioread32(SLCR_LOCKSTA);
+		if (val != 0) {
+			/* disable write-protect */
+			iowrite32(UNLOCK_KEY, SLCR_UNLOCK);
+			/* check if it was successful */
+			if (ioread32(SLCR_LOCKSTA) != 0)
+				return -EIO;
+		}
+
+		
+		iowrite32((const __u32) param, FPGA0_CLK_CTRL);
+
+		if (val != 0) {
+			/* re-enable write-protect */
+			iowrite32(LOCK_KEY, SLCR_LOCK);
+		}
 
 	default:
 		return -ENOTTY; /* POSIX standard */
