@@ -25,6 +25,8 @@
 
 #	define SHA256_ACCEL_STEP _IO(SHA256_ACCEL_MAGIC, 9)
 
+#	define SHA256_ACCEL_SET_CLOCK_SPEED _IOW(SHA256_ACCEL_MAGIC, 10, const __u32)
+
 #	define SHA256_ACCEL_NUM_REGS 50
 
 struct sha256_accel_msg_s {

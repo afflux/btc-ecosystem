@@ -15,6 +15,13 @@
 
 #define DBG(type, message, ...) printk(type CLASS_NAME ": " message, ##__VA_ARGS__)
 
+/* System Level Control Registers */
+#define SLCR_ADDR_BASE (0xf8000000 + SLCR_ADDR_OFFSET)
+#define SLCR_ADDR_OFFSET 0x170
+#define SLCR_ADDR_LEN 0x3f
+
+#define REG_FPGA0_CLK_CTRL (0x170 - SLCR_ADDR_OFFSET)
+
 #define SHA256_ACCEL_ADDR_BASE 0x43c00000
 #define SHA256_ACCEL_ADDR_LEN 68
 #define SHA256_ACCEL_IRQ 61
@@ -49,7 +56,7 @@ static DECLARE_WAIT_QUEUE_HEAD(sha256_accel_queue);
 static LIST_HEAD(sha256_accel_msg_list);
 static DEFINE_MUTEX(sha256_accel_msg_mutex);
 static struct sha256_accel_msg_list_s *sha256_accel_msg = NULL;
-static __u32 *sha256_accel_mem;
+static __u32 *slcr_mem, *sha256_accel_mem;
 
 static bool sha256_accel_msg_dequeue(void) {
 	struct list_head *ptr;
@@ -231,6 +238,22 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 
 		break;
 
+	case SHA256_ACCEL_SET_CLOCK_SPEED:
+		/* first, calculate the value of the DIVISOR0 and check that it is within the right bounds */
+		val = 1000 / ((const __u32) param);
+		if (val == 0 || val > 0x3f)
+			return -1;
+
+		/* then assemble the complete content of the FPGA0_CLK_CTRL */
+		val = (0 << 4) // SRCSEL @[5:4], 0 = IO PLL
+			| (val << 8) // DIVISOR0 @[13:8] = ceil(1000.0 / target_freq)
+			| (1 << 20); // DIVISOR1 @[25:20] = always 1
+
+		DBG(KERN_INFO, "setting REG_FPGA0_CLK_CTRL to %08x\n", val);
+
+		iowrite32(val, &slcr_mem[REG_FPGA0_CLK_CTRL]);
+		break;
+
 	default:
 		return -ENOTTY; /* POSIX standard */
 	}
@@ -312,14 +335,20 @@ static int __init sha256_accel_init(void) {
 		goto error_device;
 	}
 
+	mem = request_mem_region(SLCR_ADDR_BASE, SLCR_ADDR_LEN, DEVICE_NAME);
+	if (mem == NULL) {
+		DBG(KERN_ALERT, "Failed to request memory region of length %d starting %p.\n", SLCR_ADDR_LEN, (void *) SLCR_ADDR_BASE);
+		retval = -1;
+		goto error_mem_region_slcr;
+	}
+	slcr_mem = ioremap_nocache(SLCR_ADDR_BASE, SLCR_ADDR_LEN);
 
 	mem = request_mem_region(SHA256_ACCEL_ADDR_BASE, SHA256_ACCEL_ADDR_LEN, DEVICE_NAME);
 	if (mem == NULL) {
 		DBG(KERN_ALERT, "Failed to request memory region of length %d starting %p.\n", SHA256_ACCEL_ADDR_LEN, (void *) SHA256_ACCEL_ADDR_BASE);
 		retval = -1;
-		goto error_mem_region;
+		goto error_mem_region_sha256;
 	}
-
 	sha256_accel_mem = ioremap_nocache(SHA256_ACCEL_ADDR_BASE, SHA256_ACCEL_ADDR_LEN);
 
 	retval = request_irq(SHA256_ACCEL_IRQ, sha256_accel_irq, 0, DEVICE_NAME, NULL);
@@ -330,7 +359,10 @@ static int __init sha256_accel_init(void) {
 
 	/* if anything goes wrong, free the allocated ressources in the reverse order */
 error_irq:
-error_mem_region:
+error_mem_region_sha256:
+	iounmap(slcr_mem);
+	release_mem_region(SLCR_ADDR_BASE, SLCR_ADDR_LEN);
+error_mem_region_slcr:
 error_device:
 	class_unregister(sha256_accel_class);
 	class_destroy(sha256_accel_class);
@@ -367,6 +399,9 @@ static void __exit sha256_accel_exit(void) {
 
 	iounmap(sha256_accel_mem);
 	release_mem_region(SHA256_ACCEL_ADDR_BASE, SHA256_ACCEL_ADDR_LEN);
+
+	iounmap(slcr_mem);
+	release_mem_region(SLCR_ADDR_BASE, SLCR_ADDR_LEN);
 
 	free_irq(SHA256_ACCEL_IRQ, NULL);
 	mutex_unlock(&sha256_accel_msg_mutex);
