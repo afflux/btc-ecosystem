@@ -125,12 +125,16 @@ int main(int argc, char *argv[]) {
 
 		if (ret == 0) {
 			ret = ioctl(fd, SHA256_ACCEL_GET_NONCE_CURRENT, &nonce_current);
-			if (ret)
+			if (ret) {
 				perror("ioctl GET_NONCE_CURRENT");
+				continue;
+			}
 
 			ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
-			if (ret)
+			if (ret) {
 				perror("ioctl GET_STATUS");
+				continue;
+			}
 
 			printf("[.] status: %08x, nonce current: %08x\n", status, nonce_current);
 		} else if (ret == -1) {

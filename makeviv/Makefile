@@ -1,9 +1,11 @@
 SRC = $(wildcard src/*.vhd)
 BIT = system.bit
+BIN = system.bin
 OUTDIR = out
 BAKDIR = bak
 SHELL = /bin/bash
 TOP = $(shell pwd)
+export PATH := ${PATH}:$(shell readlink -f ../scripts/)
 
 .PHONY: all clean scp
 
@@ -12,8 +14,9 @@ all: $(OUTDIR)/$(BIT)
 clean:
 	rm -rf $(OUTDIR)
 
-scp: $(OUTDIR)/$(BIT)
-	scp $^ linaro:/mnt/
+scp: $(OUTDIR)/$(BIT) $(OUTDIR)/$(BIN)
+	scp $< linaro:/mnt/
+	scp $^ linaro:
 
 $(OUTDIR):
 	mkdir $@
@@ -32,3 +35,6 @@ $(OUTDIR)/$(BIT): $(OUTDIR) $(BAKDIR) $(SRC)
 	popd ; \
 	rm -rfv $$tmpdir ; \
 	cp -v $@ $(BAKDIR)/$(shell date "+%s")_$(BIT)
+
+$(OUTDIR)/$(BIN): $(OUTDIR)/$(BIT)
+	fpga-bit-to-bin.py --flip $< $@
