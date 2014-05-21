@@ -37,11 +37,13 @@
 #define REG_DIFFICULTY_MASK 11
 #define REG_NONCE_CANDIDATE 19
 #define REG_NONCE_CURRENT 20
-#define REG_STATUS 21
-#define REG_CONTROL 22
-#define REG_IRQ_MASK 23
-#define REG_STEP 24
-#define REG_DEBUG 25
+#define REG_NONCE_FIRST 21
+#define REG_NONCE_LAST 22
+#define REG_STATUS 23
+#define REG_CONTROL 24
+#define REG_IRQ_MASK 25
+#define REG_STEP 26
+#define REG_DEBUG 27
 
 #define SHA256_ACCEL_IRQ 61
 
@@ -213,38 +215,12 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 		iowrite32((const __u32) param, &sha256_accel_mem[REG_CONTROL]);
 		break;
 
-	case SHA256_ACCEL_GET_NONCE_CURRENT:
-		addr = (void __user *) param;
-		val = ioread32(&sha256_accel_mem[REG_NONCE_CURRENT]);
-
-		if (IS_ERR_VALUE(put_user(val, (__u32 *) addr)))
-			 return -EFAULT;
-
+	case SHA256_ACCEL_SET_NONCE_FIRST:
+		iowrite32((const __u32) param, &sha256_accel_mem[REG_NONCE_FIRST]);
 		break;
 
-	case SHA256_ACCEL_GET_STATUS:
-		addr = (void __user *) param;
-		val = ioread32(&sha256_accel_mem[REG_STATUS]);
-
-		if (IS_ERR_VALUE(put_user(val, (__u32 *) addr)))
-			 return -EFAULT;
-
-		break;
-
-	case SHA256_ACCEL_GET_DEBUG:
-		addr = (void __user *) param;
-
-		if (!access_ok(VERIFY_WRITE, addr, 4*SHA256_ACCEL_NUM_REGS))
-			return -EFAULT;
-
-		memcpy_fromio(buf, sha256_accel_mem, 4*SHA256_ACCEL_NUM_REGS);
-		copy_to_user(addr, buf, 4*SHA256_ACCEL_NUM_REGS);
-
-		break;
-
-	case SHA256_ACCEL_STEP:
-		iowrite32(0x1, &sha256_accel_mem[REG_STEP]);
-
+	case SHA256_ACCEL_SET_NONCE_LAST:
+		iowrite32((const __u32) param, &sha256_accel_mem[REG_NONCE_LAST]);
 		break;
 
 	case SHA256_ACCEL_SET_CLOCK_SPEED:
@@ -281,6 +257,37 @@ static long sha256_accel_ioctl(struct file *file_ptr, unsigned int command, unsi
 			/* re-enable write-protect */
 			iowrite32(SLCR_LOCK_KEY, &slcr_mem[REG_SLCR_LOCK]);
 		}
+		break;
+
+	case SHA256_ACCEL_GET_NONCE_CURRENT:
+		if (IS_ERR_VALUE(put_user(ioread32(&sha256_accel_mem[REG_NONCE_CURRENT]), (__u32 __user *) param)))
+			 return -EFAULT;
+		break;
+
+	case SHA256_ACCEL_GET_NONCE_CANDIDATE:
+		if (IS_ERR_VALUE(put_user(ioread32(&sha256_accel_mem[REG_NONCE_CANDIDATE]), (__u32 __user *) param)))
+			 return -EFAULT;
+		break;
+
+	case SHA256_ACCEL_GET_STATUS:
+		if (IS_ERR_VALUE(put_user(ioread32(&sha256_accel_mem[REG_STATUS]), (__u32 __user *) param)))
+			 return -EFAULT;
+		break;
+
+	case SHA256_ACCEL_GET_DEBUG:
+		addr = (void __user *) param;
+
+		if (!access_ok(VERIFY_WRITE, addr, 4*SHA256_ACCEL_NUM_REGS))
+			return -EFAULT;
+
+		memcpy_fromio(buf, sha256_accel_mem, 4*SHA256_ACCEL_NUM_REGS);
+		copy_to_user(addr, buf, 4*SHA256_ACCEL_NUM_REGS);
+
+		break;
+
+	case SHA256_ACCEL_STEP:
+		iowrite32(0x1, &sha256_accel_mem[REG_STEP]);
+
 		break;
 
 	default:

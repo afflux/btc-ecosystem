@@ -6,8 +6,9 @@ export LANG="en_US.UTF-8"
 source /opt/Xilinx/Vivado/2014.1/settings64.sh
 
 tmpdir=$(mktemp -d)
-cd $tmpdir
+pushd $tmpdir
 
 vivado $@
 
+popd
 rm -rf $tmpdir

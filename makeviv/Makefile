@@ -33,7 +33,7 @@ $(OUTDIR)/$(BIT): $(OUTDIR) $(BAKDIR) $(SRC)
 	pushd $$tmpdir ; \
 	vivado -mode tcl -source $(TOP)/impl.tcl ; \
 	popd ; \
-	rm -rfv $$tmpdir ; \
+	rm -rf $$tmpdir ; \
 	cp -v $@ $(BAKDIR)/$(shell date "+%s")_$(BIT)
 
 $(OUTDIR)/$(BIN): $(OUTDIR)/$(BIT)

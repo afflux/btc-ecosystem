@@ -47,13 +47,13 @@ int main(int argc, char *argv[]) {
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: runtest <nlz>\n");
-		return -1;
+		return EXIT_FAILURE;
 	}
 
 	fd = open(SHA256_ACCEL_DEVICE, O_RDONLY);
 	if (fd == -1) {
 		perror("failed to open sha256 accelerator device " SHA256_ACCEL_DEVICE);
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	ret = ioctl(fd, SHA256_ACCEL_SET_CLOCK_SPEED, 71);
@@ -63,17 +63,20 @@ int main(int argc, char *argv[]) {
 	ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
 	if (ret)
 		perror("ioctl GET_STATUS");
-	printf("[.] status: %08x\n", status);
+	else
+		printf("[.] status: %08x\n", status);
 
 	printf("[+] resetting\n");
-	ioctl(fd, SHA256_ACCEL_RESET);
+	ret = ioctl(fd, SHA256_ACCEL_RESET);
+	if (ret)
+		perror("ioctl RESET");
 
 	printf("[+] waiting for reset\n");
 	do {
 		ret = ioctl(fd, SHA256_ACCEL_GET_STATUS, &status);
 		if (ret)
 			perror("ioctl GET_STATUS");
-	} while (status != 0x1);
+	} while (status != 0x01);
 
 	struct btc_s sample = {
 		.Version = htole32(1),
@@ -141,17 +144,27 @@ int main(int argc, char *argv[]) {
 		} else {
 			ret = read(fd, (char *) &msg, sizeof(msg));
 			if (ret == sizeof(msg)) {
-				printf("[.] status: %08x, nonce candidate: %08x\n", msg.status, msg.nonce_candidate);
+				switch (msg.status) {
+				case 0x08:
+					printf("[.] status: %08x, no nonce candidate found\n", msg.status);
+					break;
+				case 0x10:
+					printf("[.] status: %08x, nonce candidate: %08x\n", msg.status, msg.nonce_candidate);
 
-				sample.Nonce = htobe32(msg.nonce_candidate);
-				print_hex(&sample, sizeof(sample));
-				sha256_update(&ctx, (uint8_t *) &sample.Nonce, sizeof(sample.Nonce));
-				sha256_finish(&ctx, (uint8_t *) state);
+					sample.Nonce = htobe32(msg.nonce_candidate);
+					print_hex(&sample, sizeof(sample));
+					sha256_update(&ctx, (uint8_t *) &sample.Nonce, sizeof(sample.Nonce));
+					sha256_finish(&ctx, (uint8_t *) state);
 
-				sha256_init(&ctx);
-				sha256_update(&ctx, state, sizeof(state));
-				sha256_finish(&ctx, state);
-				print_hex(&state, 32);
+					sha256_init(&ctx);
+					sha256_update(&ctx, state, sizeof(state));
+					sha256_finish(&ctx, state);
+					print_hex(&state, 32);
+					break;
+				default:
+					fprintf(stderr, "[-] status: %08x, unexpected status\n", msg.status);
+					break;
+				}
 			} else {
 				fprintf(stderr, "[-] short read\n");
 			}

@@ -16,6 +16,8 @@ entity org is
     prefix: in std_ulogic_vector(0 to 95);
     mask: in std_ulogic_vector(0 to 255);
     ctrl: in std_ulogic_vector(31 downto 0);
+    nonce_first: in w32;
+    nonce_last: in w32;
 
     nonce_candidate: out w32;
     nonce_current: out w32;
@@ -30,7 +32,6 @@ end entity;
 architecture arc of org is
   constant RST_IDX: natural := 0;
   constant RUN_IDX: natural := 1;
-  constant NONCE_MAX: w32 := (others=>'1');
   constant PADDING_0: std_ulogic_vector(0 to 383) := (0=>'1', 374=>'1', 376=>'1', others=>'0');
   constant PADDING_1: std_ulogic_vector(0 to 255) := (0=>'1', 247=>'1', others=>'0');
 
@@ -40,6 +41,7 @@ architecture arc of org is
   type state_t is (RDY, BUSY, FIN, IDLE, FOUND, ERR);
   signal status_internal: state_t;
   signal nonce: w32;
+  signal nonce_candidate_internal: w32;
   signal ctr: unsigned(7 downto 0);
 
   signal rst_0, rst_1: std_ulogic;
@@ -105,7 +107,7 @@ begin
             if ctrl(RUN_IDX) = '1' then
               status_internal <= BUSY;
               ctr <= to_unsigned(0, ctr'length);
-              nonce <= to_unsigned(0, nonce'length);
+              nonce <= nonce_first;
             end if;
 
           when BUSY =>
@@ -118,26 +120,31 @@ begin
               ctr <= to_unsigned(1, ctr'length);
             end if;
 
-            if nonce = NONCE_MAX then
+            if nonce = nonce_last then
               status_internal <= FIN;
             end if;
 
           when FIN =>
             if ctr = stage_pipe'high then
-              status_internal <= IDLE;
               irq <= '1';
+              status_internal <= IDLE;
             end if;
 
           when IDLE =>
 
           when FOUND =>
+            if ctrl(RUN_IDX) = '1' then
+              status_internal <= BUSY;
+              ctr <= to_unsigned(0, ctr'length);
+              nonce <= nonce_candidate_internal + 1;
+            end if;
 
           when others =>
             status_internal <= ERR;
         end case;
 
         if (status_internal = BUSY or status_internal = FIN) and stage_pipe(stage_pipe'high) = '1' and is_candidate(mask, result_1) then
-          nonce_candidate <= nonce_pipe(nonce_pipe'high);
+          nonce_candidate_internal <= nonce_pipe(nonce_pipe'high);
           result_candidate <= result_1;
           irq <= '1';
           status_internal <= FOUND;
@@ -168,6 +175,7 @@ begin
   sha_1: entity work.hw(arc) port map(clk, rst_1, load_1, H0,   padded_msg_1, result_1, step);
 
   nonce_current <= nonce;
+  nonce_candidate <= nonce_candidate_internal;
   dbg(0 to 7) <= result_candidate;
   dbg(8 to 15) <= to_block256(mask);
   dbg(16 to 23) <= to_block256(to_suv256(result_candidate) and mask);
