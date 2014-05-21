@@ -45,7 +45,6 @@ mkinstalldirs
 
 *.swp
 
-m4/
 ltmain.sh
 *.lo
 .libs
