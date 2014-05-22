@@ -483,7 +483,11 @@ begin
 	sha256_accel_status <= to_stdlogicvector(internal_status);
 	sha256_accel_irq <= external_irq;
 
-	inst: entity work.org(arc) port map(
+	inst: entity work.org(arc)
+	generic map (
+		1
+	)
+	port map (
 		internal_clk,
 		internal_state_in,
 		internal_prefix,
