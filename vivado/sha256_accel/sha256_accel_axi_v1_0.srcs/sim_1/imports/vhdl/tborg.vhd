@@ -31,9 +31,11 @@ architecture arc of tborg is
   signal irq: std_ulogic;
 
   signal dbg: w32_vector(0 to 24);
+  constant n_0: w32 := (others=>'0');
+  constant n_1: w32 := (others=>'1');
 begin
 
-  sha: entity work.org(arc) port map(clk, state_in, prefix, mask, ctrl, nonce_candidate, nonce_current, status, irq, dbg, '1');
+  sha: entity work.org(arc) port map(clk, state_in, prefix, mask, ctrl, n_0, n_1, nonce_candidate, nonce_current, status, irq, dbg, '1');
 
   CLK_GEN: process
   begin
