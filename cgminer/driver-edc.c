@@ -9,10 +9,12 @@
 #include <string.h>
 
 #include <sha256_accel.h>
-#define CLOCK_FREQ 71u
+#define CLOCK_FREQ 110u
+#define TEMPFILE "/sys/devices/amba.0/f8007100.ps7-xadc/temp"
 
 struct edc_info {
   int fd;
+  int tempfd;
   pthread_mutex_t fd_lock;
 };
 
@@ -53,6 +55,8 @@ static void edc_drv_detect(bool hotplug) {
   mutex_init(&edcinfo->fd_lock);
   edcinfo->fd = -1;
 
+  edcinfo->tempfd = open(TEMPFILE, O_RDONLY);
+
   if (unlikely(!add_cgpu(info)))
     goto cleanup;
 
@@ -84,7 +88,7 @@ int64_t edc_scanhash(struct thr_info* thr, struct work* work,
     int64_t max_nonce) {
   uint32_t status = 0u, nonce_current;
   char buf[128], *strerr;
-  int errsv, i, ret;
+  int errsv, i, ret, fd;
   unsigned char b;
   int64_t hashes = -1;
   fd_set set;
@@ -116,7 +120,7 @@ found:
   print_hex(work->device_target);
 
   mutex_lock(&edcinfo->fd_lock);
-  int fd = open(thr->cgpu->device_path, O_RDWR);
+  fd = open(thr->cgpu->device_path, O_RDWR);
   edcinfo->fd = fd;
   if (unlikely(-1 == fd)) {
     mutex_unlock(&edcinfo->fd_lock);
@@ -200,6 +204,12 @@ found:
 
       /* we are still alive! please don't kill us! we'll do everything! :-( */
       cgtime(&thr->last);
+      if (edcinfo->tempfd != -1) {
+        ret = read(edcinfo->tempfd, buf, sizeof(msg));
+        if (ret > 0) {
+          sscanf(buf, "%lf", &thr->cgpu->temp);
+        }
+      }
 
     } else if (unlikely(ret == -1)) {
       LOG_ERRNO("edc: failed to select");
@@ -211,9 +221,11 @@ found:
         break;
       }
 
-      applog(LOG_ERR, "GOT A RESULT w00t");
-
-      submit_nonce(thr, work, msg.nonce_candidate);
+      if (msg.status == 0x10) {
+        applog(LOG_ERR, "GOT A RESULT w00t");
+        submit_nonce(thr, work, msg.nonce_candidate);
+      } else
+        applog(LOG_ERR, "no result in this nonce domain :-(");
       break;
     }
   }
@@ -257,7 +269,9 @@ static void edc_get_statline_before(char* outbuf, size_t bufsiz,
     goto close;
   }
 
-  tailsprintf(outbuf, bufsiz, "edc: status=%08x curnonce=%08x", status, nonce);
+  tailsprintf(outbuf, bufsiz,
+              "edc: temperature=% 3.0f status=%08x curnonce=%08x", cgpu->temp,
+              status, nonce);
 
 close:
   mutex_unlock(&edcinfo->fd_lock);
