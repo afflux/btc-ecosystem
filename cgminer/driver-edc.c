@@ -14,7 +14,6 @@
 
 struct edc_info {
   int fd;
-  int tempfd;
   pthread_mutex_t fd_lock;
 };
 
@@ -55,8 +54,6 @@ static void edc_drv_detect(bool hotplug) {
   mutex_init(&edcinfo->fd_lock);
   edcinfo->fd = -1;
 
-  edcinfo->tempfd = open(TEMPFILE, O_RDONLY);
-
   if (unlikely(!add_cgpu(info)))
     goto cleanup;
 
@@ -88,7 +85,7 @@ int64_t edc_scanhash(struct thr_info* thr, struct work* work,
     int64_t max_nonce) {
   uint32_t status = 0u, nonce_current;
   char buf[128], *strerr;
-  int errsv, i, ret, fd;
+  int errsv, i, ret, fd, tempfd;
   unsigned char b;
   int64_t hashes = -1;
   fd_set set;
@@ -204,11 +201,14 @@ found:
 
       /* we are still alive! please don't kill us! we'll do everything! :-( */
       cgtime(&thr->last);
-      if (edcinfo->tempfd != -1) {
-        ret = read(edcinfo->tempfd, buf, sizeof(msg));
+      tempfd = open(TEMPFILE, O_RDONLY);
+      if (tempfd != -1) {
+        ret = read(tempfd, buf, sizeof(msg));
         if (ret > 0) {
+          buf[MIN(ret, 127)] = '\0';
           sscanf(buf, "%lf", &thr->cgpu->temp);
         }
+        close(tempfd);
       }
 
     } else if (unlikely(ret == -1)) {
