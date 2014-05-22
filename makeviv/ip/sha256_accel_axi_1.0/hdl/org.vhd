@@ -10,7 +10,7 @@ use sha256_lib.sha256_pkg.all;
 
 entity org is
   generic(
-    instances: natural range 1 to 16 := 1
+    instances: natural range 1 to 16 := 2
   );
   port(
     clk: in std_ulogic;
@@ -38,8 +38,8 @@ architecture arc of org is
   constant PADDING_0: std_ulogic_vector(0 to 383) := (0=>'1', 374=>'1', 376=>'1', others=>'0');
   constant PADDING_1: std_ulogic_vector(0 to 255) := (0=>'1', 247=>'1', others=>'0');
 
-  type std_ulogic_vector_2d is array (0 to instances - 1) of std_ulogic_vector(0 to 132);
-  type w32_vector_2d is array (0 to instances - 1) of w32_vector(0 to 132);
+  type std_ulogic_vector_2d is array (0 to instances - 1) of std_ulogic_vector(0 to 10);
+  type w32_vector_2d is array (0 to instances - 1) of w32_vector(0 to 10);
   type block256_2d is array (0 to instances - 1) of block256;
 
   signal stage_pipe: std_ulogic_vector_2d;
@@ -82,6 +82,15 @@ architecture arc of org is
     end loop;
     return res;
   end function;
+  
+  function uand(a: boolean; b: std_ulogic) return std_ulogic is
+  begin
+    if a = false then
+      return '0';
+    else
+      return b;
+    end if;
+  end function uand;
 begin
 
   process(clk)
@@ -98,13 +107,16 @@ begin
         stage_pipe <= (others=>(others=>'0'));
         status_internal <= RDY;
         clk_counter <= to_unsigned(0, clk_counter'length);
+        ctr <= to_unsigned(0, ctr'length);
       elsif step = '1' then
         clk_counter <= clk_counter + 1;
 
         -- the pipelines have to keep mooving, independent from the current state (status_internal)
         for i in 0 to instances - 1 loop
-          nonce_pipe(i) <= to_unsigned(0, nonce_pipe'length) & nonce_pipe(i)(nonce_pipe(i)'low to nonce_pipe(i)'high - 1);
-          stage_pipe(i) <= '0' & stage_pipe(i)(stage_pipe(i)'low to stage_pipe(i)'high - 1);
+          if ctr mod 16 = i then
+            nonce_pipe(i) <= to_unsigned(0, nonce_pipe(i)'length) & nonce_pipe(i)(nonce_pipe(i)'low to nonce_pipe(i)'high - 1);
+            stage_pipe(i) <= '0' & stage_pipe(i)(stage_pipe(i)'low to stage_pipe(i)'high - 1);
+          end if;
         end loop;
         ctr <= ctr + 1;
 
@@ -134,7 +146,7 @@ begin
             end if;
 
           when FIN =>
-            if ctr = stage_pipe(0)'high then
+            if ctr = stage_pipe(0)'high * 16 then
               irq <= '1';
               status_internal <= IDLE;
             end if;
@@ -181,7 +193,7 @@ begin
     port map (
       clk,
       ctrl(RST_IDX), -- reset
-      stage_pipe(i)(0), -- load
+      uand(ctr mod 16 = i, stage_pipe(i)(0)), -- load
       to_block256(state_in), -- initial state
       to_block512(prefix & std_ulogic_vector(nonce_pipe(i)(0)) & PADDING_0), -- padded message
       result_0(i),
@@ -192,7 +204,7 @@ begin
     port map (
       clk,
       ctrl(RST_IDX), -- reset
-      stage_pipe(i)(66), -- load
+      uand(ctr mod 16 = i, stage_pipe(i)(5)), -- load
       H0, -- initial state
       to_block512(to_suv256(result_0(i)) & PADDING_1), -- padded message
       result_1(i),
