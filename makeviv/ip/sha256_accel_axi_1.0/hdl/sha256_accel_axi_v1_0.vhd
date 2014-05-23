@@ -433,8 +433,8 @@ begin
 			when REG_STEP =>
 				-- internal_step is write only
 			when REG_DEBUG to REG_DEBUG + 24 =>
-				reg_addr := loc_addr - REG_DEBUG;
-				reg_data_out <= std_logic_vector(internal_dbg(reg_addr));
+--				reg_addr := loc_addr - REG_DEBUG;
+--				reg_data_out <= std_logic_vector(internal_dbg(reg_addr));
 			when others =>
 			end case;
 		end if;

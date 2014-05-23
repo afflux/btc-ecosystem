@@ -48,7 +48,7 @@ begin
     end loop;
     report "Simulation finished after " & integer'image(ctr) & " cycles" severity note;
     wait;
-  end process CLK_GEN;
+  end process;
 
   -- this corresponds to sha256_unpadded("01000000" +"81cd02ab7e569e8bcd9317e2fe99f2de44d49ab2b8851ba4a308000000000000" + "e320b6c2fffc8d750423db8b1eb942ae710e951ed797f7affc8892b0")
   state_in <= X"9524c59305c5671316e669ba2d2810a007e86e372f56a9dacd5bce697a78da2d";
@@ -74,8 +74,8 @@ begin
           ctrl <= (1=>'1', others=>'0');
 
         when 1 =>
-          --report "start low" severity note;
-          --ctrl <= (others=>'0');
+          report "start low" severity note;
+          ctrl <= (others=>'0');
 
         when others =>
       end case;

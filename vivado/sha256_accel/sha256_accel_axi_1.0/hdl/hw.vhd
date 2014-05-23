@@ -29,6 +29,29 @@ architecture arc of hw is
   signal states: state_pipe(0 to 4);
   -- hin_pipe carries the input state to the last cycle for the final combination
   signal hin_pipe: state_pipe(0 to 4);
+  
+  -- pragma synthesis_off
+  function chr(sul: std_ulogic) return character is 
+    variable c: character;
+  begin
+    case sul is
+      when '1' => c := '1';
+      when '0' => c := '0';
+      when 'U' => c := 'U';
+      when others => c := '?';
+    end case;
+    return c;
+  end function chr;
+  function to_string(sulv: std_ulogic_vector) return string is
+    variable result: string(sulv'range);
+  begin
+    for i in result'range loop
+      result(i) := chr(sulv(i));
+    end loop;
+    return result;
+  end function to_string;
+  -- pragma synthesis_on
+  
 begin
 
   process(clk)
@@ -135,7 +158,7 @@ begin
               k_in := k(i*16 + 15);
             when others =>
               -- pragma synthesis_off
-              report "invalid stage enable vector" severity error;
+              report "invalid stage enable vector " & integer'image(i) & " is " & to_string(stage_enable(i*16 to i*16+15)) severity failure;
               -- pragma synthesis_on
           end case;
           states(i) <= cf1(state_in, w_in, k_in);

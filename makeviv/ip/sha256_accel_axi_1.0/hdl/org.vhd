@@ -10,7 +10,7 @@ use sha256_lib.sha256_pkg.all;
 
 entity org is
   generic(
-    instances: natural range 1 to 16 := 2
+    instances: natural range 1 to 16
   );
   port(
     clk: in std_ulogic;
@@ -141,7 +141,7 @@ begin
             end loop;
 
             if nonce = nonce_last then
-              ctr <= to_unsigned(1, ctr'length);
+              ctr <= (ctr mod 16) + 1;
               status_internal <= FIN;
             end if;
 
